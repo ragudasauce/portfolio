@@ -1,0 +1,4 @@
+.nova
+.vscode
+dist
+node_modules
