@@ -1,0 +1,16 @@
+{
+  "name": "front-end",
+  "version": "0.0.1",
+  "description": "The front end of the portfolio site",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ragudasauce/portfolio/web"
+  },
+  "author": "Mark Connolly",
+  "license": "ISC"
+}

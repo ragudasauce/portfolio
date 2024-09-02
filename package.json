@@ -28,5 +28,8 @@
     "globals": "^15.9.0",
     "prettier": "^3.3.3",
     "vite": "^5.4.2"
-  }
+  },
+  "workspaces": [
+    "packages/front-end"
+  ]
 }
