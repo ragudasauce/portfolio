@@ -1,5 +1,5 @@
 {
-  "name": "front-end",
+  "name": "ui",
   "version": "0.0.1",
   "description": "The front end of the portfolio site",
   "main": "index.js",
