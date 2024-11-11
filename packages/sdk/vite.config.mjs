@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 /** @type {import('vite').UserConfig} */
 export default {
+    cacheDir: './cache/.vite',
     build: {
         sourcemap: true,
         minify: false,
