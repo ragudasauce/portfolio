@@ -1,0 +1,22 @@
+{
+  "name": "sdk",
+  "version": "0.0.1",
+  "description": "SDK",
+  "type": "module",
+  "main": "./web/index.mjs",
+  "exports": {
+    ".": "./lib"
+  },
+  "devDependencies": {
+    "glob": "^11.0.0",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  },
+  "scripts": {
+    "test": "vitest",
+    "build": "vite",
+    "vite": "vite"
+  },
+  "author": "",
+  "license": "ISC"
+}

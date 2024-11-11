@@ -30,6 +30,7 @@
     "vite": "^5.4.2"
   },
   "workspaces": [
-    "packages/front-end"
+    "packages/front-end",
+    "packages/sdk"
   ]
 }
