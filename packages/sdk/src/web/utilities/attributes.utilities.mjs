@@ -1,8 +1,8 @@
 /** @module utilities/attributes */
 
-export const camelCasePattern = /^[a-z]+(?:[A-Z][a-z]+)+$/g;
-export const kebabCasePattern = /^[a-z]+(?:-[a-z0-9]+)*$/g;
-export const standardPattern = /^[a-z]+$/g;
+const camelCasePattern = /^[a-z]+(?:[A-Z][a-z]+)+$/g;
+const kebabCasePattern = /^[a-z]+(?:-[a-z0-9]+)*$/g;
+const standardPattern = /^[a-z]+$/g;
 
 
 /**
@@ -73,4 +73,35 @@ export function isDefault(string) {
  */
 export function isKebabCase(string) {
     return kebabCasePattern.test(string);
+}
+
+export function createAttributeDescription(options) {
+    let description = {
+        enumerable: false,
+        configurable: false
+    };
+
+    let data = {
+        writable: false,
+        value: undefined
+    }
+
+    let accessor = {
+        get() {},
+        set() {}
+    }
+
+    const optionKeys = Object.keys(options);
+    console.log(optionKeys)
+    let isData = optionKeys.some((item) => /writable|value/.test(item));
+    const isAccessor = optionKeys.some((item) => /get|set/.test(item));
+
+    if (isData && isAccessor || !isData && !isAccessor) {
+        isData = true;
+    }
+
+    // const isData = new Set([
+    //     Object.hasOwn(options, 'writable'),
+    //     Object.hasOwn(options, 'value')
+    // ])
 }

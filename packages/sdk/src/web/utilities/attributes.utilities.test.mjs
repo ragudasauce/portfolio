@@ -6,6 +6,7 @@ import {
     isCamelCase,
     isDefault,
     isKebabCase,
+    createAttributeDescription
 } from './attributes.utilities.mjs';
 
 describe('The Attribute Utillities Module', () => {
@@ -96,4 +97,25 @@ describe('The Attribute Utillities Module', () => {
             expect(result).toBe(expected);
         });
     });
+
+    describe('the createAttributeDescription function', () => {
+        it('should return an object to set data properties', () => {
+            const result = createAttributeDescription({
+                get() {
+                    return this.value
+                },
+                set(value) {
+                    this.value = value
+                }
+            })
+            console.log(result)
+        });
+        it('should return an object to set accessor properties', () => {
+
+        });
+
+        it('should return a data property if both data and accessor properties are sent', () => {
+
+        });
+    })
 });
