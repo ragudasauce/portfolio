@@ -1,124 +1,198 @@
-import {
-    convertCamelToKebabCase,
-    formatAttributeName,
-} from '../utilities/attributes.utilities.mjs';
-
 /**
- * @typedef { object } AttributeOptions
- * @extends {AttributeDescriptor}
- * @param { boolean } observable
- * @property { null | undefined | boolean | string | object | function } value
- * @property { boolean } writable
- * @property { function } get
- * @property { function } set
+ * @typedef { object } ShadowRootOptions
+ * @param { string } [mode]
+ * @param { boolean } [clonable=false]
+ * @param { boolean } [delegatesFocus=false]
+ * @param { boolean } [serializeable=false]
+ * @param { string } [slotAssignment='named']
  */
 
 /**
- * @typedef { object } AttributeDescriptor
- * @property { boolean } [enumerable=false]
- * @property { boolean } [configurable=false]
- */
-
-/**
- * @typedef { object } AttributeDataDescriptor
- * @extends {AttributeDescriptor}
- * @property { null | undefined | boolean | string | object | function } [value=undefined]
- * @property { boolean } [writable=false]
- */
-
-/**
- * @typedef { object } AttributeAccessorDescriptor
- * @extends {AttributeDescriptor}
- * @property { function } [get=undefined]
- * @property { function } [set=undefined]
+ * @typedef { object } StateOptions
+ * @param { boolean } isBoolean=true
+ * @param { string[] } [values]
+ * @param { boolean } [isDefault=false]
+ * @param { string | boolean } [defaultValue]
+ * @param { object } [ariaProperty]
  */
 
 /**
  * @extends HTMLElement
+ * @method { function } adoptHTML
  */
 export default class SDKBaseHTMLElement extends HTMLElement {
-    observableAttributeSet = new Set();
+    #observableAttributesSet = new Set();
+    #updatablePropertiesSet = new Set();
+    #statesMap = new Map();
 
-    constructor() {
+    /**
+     * @implements ShadowRootOptions
+     */
+    #shadowRootOptions = {
+        mode: 'closed',
+        clonable: false,
+        delegatesFocus: false,
+        serializeable: false,
+        slotAssignment: 'named',
+    };
+
+    /**
+     * @implements StateOptions
+     */
+    #stateOptions = {
+        isBoolean: true,
+        values: [true, false],
+        isDefault: false,
+        defaultValue: false,
+        ariaProperty: {},
+    };
+
+    constructor(config = {}) {
         super();
+        this.internals = this.attachInternals();
+
+        this.configureShadowRoot(config.shadowRootOptions);
+        this.adoptHTML(config.html);
+        this.adoptStyleSheets(config.stylesheets);
+    }
+
+    /**
+     * 
+     * @param {HTMLTemplateElement} template
+     */
+    adoptHTML(template) {
+        if (template !== undefined) {
+            this.shadowRoot.append(template.content.cloneNode(true));
+        }
+    }
+    
+    /**
+     * @memberof SDKBaseHTMLElement
+     * @param {*} stylesheets 
+     */
+    adoptStyleSheets(stylesheets) {
+        if (stylesheets) {
+            this.shadowRoot.adoptedStyleSheets = [...stylesheets];
+        }
     }
 
     /**
      *
-     * @param {*} attrName
-     * @param { AttributeOptions } options
-     * @returns { AttributeDataDescriptor | AttributeAccessorDescriptor }
+     * @param {ShadowRootOptions} options
      */
-    // createPropertyDescription(options) {
-
-    //     // let sanitized = {
-    //     //     enumerable: false,
-    //     //     configurable: false,
-    //     //     writable: false,
-    //     //     value: undefined
-    //     // };
-
-    //     // const accessorCheck = Array.from(
-    //     //     new Set([
-    //     //         Object.hasOwn(options, 'get()'),
-    //     //         Object.hasOwn(options, 'set()'),
-    //     //     ])
-    //     // );
-
-    //     // const dataCheck = Array.from(
-    //     //     new Set([
-    //     //         Object.hasOwn(options, 'value'),
-    //     //         Object.hasOwn(options, 'writable'),
-    //     //     ])
-    //     // );
-
-    //     // const check = new Set([
-    //     //     accessorCheck.includes(true),
-    //     //     dataCheck.includes(true),
-    //     // ]);
-
-    //     // if (
-    //     //     check.size === 1 ||
-    //     //     (check.size === 2 && Array.from(check)[1] === true)
-    //     // ) {
-    //     //     if (Object.hasOwn(options, 'value')) {
-    //     //         sanitized.value = options.value;
-    //     //     }
-    //     //     if (Object.hasOwn(options, 'writable')) {
-    //     //         sanitized.writable = options.writable;
-    //     //     }
-    //     // } else {
-    //     //     if (Object.hasOwn(options, 'get')) {
-    //     //         sanitized.get = options.get;
-    //     //     }
-    //     //     if (Object.hasOwn(options, 'set')) {
-    //     //         sanitized.set = options.set;
-    //     //     }
-    //     // }
-
-    //     return sanitized;
-    // }
+    configureShadowRoot(options) {
+        if (options === undefined) {
+            options = this.#shadowRootOptions;
+        }
+        this.attachShadow(options);
+    }
 
     /**
      *
      * @param {string} name
-     * @param {AttributeOptions} options
+     * @param {StateOptions} options
      */
-    createAttribute(name, options) {
-        // const attrName = formatAttributeName(name);
-        // const isObservable = options.observable === true;
-        // const description = createPropertyDescription(options);
+    defineState(name, options) {
+        this.#statesMap.set(name, this.defineStateOptions(options));
+    }
 
-        // if (isObservable) {
-        //     this.observableAttributeSet.add(attrName);
-        // }
+    /**
+     *
+     * @param {StateOptions} options
+     * @returns {StateOptions}
+     */
+    defineStateOptions(options) {
+        if (options === undefined) {
+            return this.#stateOptions;
+        }
 
-        // Object.defineProperty(this, attrName, {});
+        return Object.keys(this.#stateOptions).reduce((acc, key) => {
+            acc[key] = Object.hasOwn(options, key)
+                ? options[key]
+                : this.#stateOptions[key];
+            return acc;
+        }, {});
+    }
 
-        // set [attrName]
-        // idl?
-        // reflects?
-        // observed?
-        // type? boolean | number | string
+    /**
+     *
+     * @param {string[]} attributeNames
+     */
+    defineObservableAttributes(attributeNames) {
+        attributeNames.forEach((name) =>
+            this.#observableAttributesSet.add(name)
+        );
+    }
+
+    /**
+     *
+     * @param {string[]} propertyNames
+     */
+    defineUpgradableProperties(propertyNames) {
+        propertyNames.forEach((name) => this.#updatablePropertiesSet.add(name));
+    }
+
+    /**
+     *
+     * @returns {Set<string>}
+     */
+    retrieveObservableAttributes() {
+        return this.#observableAttributesSet;
+    }
+
+    /**
+     *
+     * @param {string} name
+     * @param {boolean} [force]
+     */
+    manageState(name, force) {
+        // this needs to also work for states that have values.
+        const states = this.internals.states;
+        const hasState = states.has(name);
+        const addCheck = Array.from(
+            new Set([force === undefined && !hasState, force === true])
+        ).includes(true);
+        const key = addCheck ? 'add' : 'delete';
+
+        states[key](name);
+    }
+
+    applyDefaultStates() {
+        this.#statesMap
+            .entries()
+            .reduce((acc, entry) => {
+                const name = entry[0];
+                const options = entry[1];
+                if (options.isDefault === true) {
+                    acc.push(name);
+                }
+                return acc;
+            }, [])
+            .forEach((state) => {
+                this.manageState(state, true);
+            });
+    }
+
+    upgradeProperty(prop) {
+        if (Object.hasOwn(this, prop)) {
+            let value = this[prop];
+            delete this[prop];
+            this[prop] = value;
+        }
+    }
+
+    upgradeProperties() {
+        Array.from(this.#updatablePropertiesSet).forEach((prop) =>
+            this.upgradeProperty(prop)
+        );
+    }
+
+    static get observableAttributes() {
+        return Array.from(this.retrieveObservableAttributes());
+    }
+
+    connectedCallback() {
+        this.upgradeProperties();
+        this.applyDefaultStates();
     }
 }

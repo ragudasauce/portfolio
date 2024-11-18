@@ -1,9 +1,16 @@
 /** @module utilities/attributes */
 
-const camelCasePattern = /^[a-z]+(?:[A-Z][a-z]+)+$/g;
-const kebabCasePattern = /^[a-z]+(?:-[a-z0-9]+)*$/g;
+const camelCasePattern = /^[a-z]+([A-Z][a-z]+)+$/g;
+const kebabCasePattern = /^[a-z]+(?:[-a-z0-9]+)+$/g;
 const standardPattern = /^[a-z]+$/g;
 
+/**
+ * @enum { string }
+ * @readonly
+ */
+export const errorMessages = {
+    FORMAT: 'Attribute names must be either kebab-case, camelCase, or single lowercase words',
+};
 
 /**
  * Converts a camelCaseString to kebab-case-string based upon a delimiter.
@@ -33,19 +40,18 @@ export function convertKebabToCamelCase(kebabString) {
  * @returns {string}
  */
 export function formatAttributeName(nameString) {
+    const isKebab = isKebabCase(nameString);
     const check = new Set([
-        isKebabCase(nameString),
+        isKebab,
         isCamelCase(nameString),
         isDefault(nameString),
     ]);
 
     if (check.size === 1) {
-        throw new Error('Attribute names must be either kebab-case, camelCase, or single lowercase words')
+        throw new Error(errorMessages.FORMAT);
     }
 
-    return isKebabCase(nameString)
-        ? nameString
-        : convertKebabToCamelCase(nameString)
+    return isKebab ? convertKebabToCamelCase(nameString) : nameString;
 }
 
 /**
@@ -54,7 +60,8 @@ export function formatAttributeName(nameString) {
  * @returns {boolean}
  */
 export function isCamelCase(string) {
-    return camelCasePattern.test(string);
+    const match = camelCasePattern.exec(string);
+    return match !== null;
 }
 
 /**
@@ -63,7 +70,8 @@ export function isCamelCase(string) {
  * @returns {boolean}
  */
 export function isDefault(string) {
-    return standardPattern.test(string);
+    const match = standardPattern.exec(string);
+    return match !== null;
 }
 
 /**
@@ -72,36 +80,55 @@ export function isDefault(string) {
  * @returns {boolean}
  */
 export function isKebabCase(string) {
-    return kebabCasePattern.test(string);
+    const match = kebabCasePattern.exec(string);
+    return match !== null;
 }
 
+/**
+ * @typedef { object } AttributeDescriptor
+ * @property { boolean } [enumerable=false]
+ * @property { boolean } [configurable=false]
+ */
+
+/**
+ * @typedef { object } AttributeDataDescriptor
+ * @extends {AttributeDescriptor}
+ * @property { null | undefined | boolean | string | object | function } [value=undefined]
+ * @property { boolean } [writable=false]
+ */
+
+/**
+* @typedef { object } AttributeAccessorDescriptor
+* @extends {AttributeDescriptor}
+* @property { function } [get=undefined]
+* @property { function } [set=undefined]
+
+/**
+ * 
+ * @param {object} options 
+ * @returns {AttributeDataDescriptor | AttributeAccessorDescriptor}
+ */
 export function createAttributeDescription(options) {
-    let description = {
-        enumerable: false,
-        configurable: false
-    };
+    const optionKeys = new Set(Object.keys(options));
+    const descriptionKeys = new Set(['enumerable', 'configurable']);
+    const dataKeys = new Set(['writable', 'value']);
+    const accessorKeys = new Set(['get', 'set']);
 
-    let data = {
-        writable: false,
-        value: undefined
-    }
+    const isAccessor = accessorKeys.intersection(optionKeys).size > 0;
+    let isData = dataKeys.intersection(optionKeys).size > 0;
 
-    let accessor = {
-        get() {},
-        set() {}
-    }
-
-    const optionKeys = Object.keys(options);
-    console.log(optionKeys)
-    let isData = optionKeys.some((item) => /writable|value/.test(item));
-    const isAccessor = optionKeys.some((item) => /get|set/.test(item));
-
-    if (isData && isAccessor || !isData && !isAccessor) {
+    if ((isData && isAccessor) || (!isData && !isAccessor)) {
         isData = true;
     }
 
-    // const isData = new Set([
-    //     Object.hasOwn(options, 'writable'),
-    //     Object.hasOwn(options, 'value')
-    // ])
+    const template = isData
+        ? descriptionKeys.union(dataKeys)
+        : descriptionKeys.union(accessorKeys);
+
+    return Array.from(template).reduce((acc, key) => {
+        if (Object.hasOwn(options, key)) {
+            acc[key] = options[key];
+        }
+        return acc;
+    }, {});
 }

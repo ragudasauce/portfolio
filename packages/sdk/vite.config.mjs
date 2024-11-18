@@ -4,10 +4,16 @@ import { fileURLToPath } from 'node:url';
 
 /** @type {import('vite').UserConfig} */
 export default {
+    optimizeDeps: {
+        esbuildOptions: {
+            target: 'esnext',
+        },
+    },
     cacheDir: './cache/.vite',
     build: {
         sourcemap: true,
         minify: false,
+        target: 'esnext',
         lib: {
             entry: './src/web/index.mjs',
             name: 'sdk',
@@ -30,6 +36,13 @@ export default {
                 dir: 'lib',
                 entryFileNames: '[name].mjs',
             },
+        },
+    },
+    test: {
+        coverage: {
+            provider: 'istanbul', // or 'v8'
+            reporter: ['text', 'json', 'html'],
+            enabled: true,
         },
     },
 };
