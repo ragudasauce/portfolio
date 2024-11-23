@@ -255,7 +255,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
     }
 
     /**
-     *
+     * Configures the shadow root
      * @param {ShadowRootOptions} options
      */
     configureShadowRoot(
