@@ -1,8 +1,8 @@
-/** @module utilities/attributes */
 
-const camelCasePattern = /^[a-z]+([A-Z][a-z]+)+$/g;
-const kebabCasePattern = /^[a-z]+(?:[-a-z0-9]+)+$/g;
-const standardPattern = /^[a-z]+$/g;
+const camelCasePattern = /^[a-z]+([A-Z][a-z]+)+$/;
+const kebabCasePattern = /^[a-z]+(?:[-a-z0-9]+)+$/;
+const standardPattern = /^[a-z]+$/;
+const notAllowedPattern = /[-_\s]+\w/g;
 
 /**
  * @enum { string }
@@ -41,17 +41,24 @@ export function convertKebabToCamelCase(kebabString) {
  */
 export function formatAttributeName(nameString) {
     const isKebab = isKebabCase(nameString);
-    const check = new Set([
-        isKebab,
-        isCamelCase(nameString),
-        isDefault(nameString),
-    ]);
+    const isCamel = isCamelCase(nameString);
+    const isDefault = isDefaultCase(nameString)
+    console.log('NAME', nameString, isKebab, isCamel, isDefault)
+    const check = new Set([isKebab,isCamel, isDefault]);
 
     if (check.size === 1) {
         throw new Error(errorMessages.FORMAT);
     }
 
     return isKebab ? convertKebabToCamelCase(nameString) : nameString;
+}
+
+export function createIDLName(nameString) {
+    console.log(nameString)
+    return nameString.replace(notAllowedPattern, (match) => {
+        console.log(match)
+        return match.replace(/[-_\s]/, '').toUpperCase();
+    })
 }
 
 /**
@@ -69,7 +76,7 @@ export function isCamelCase(string) {
  * @param {string} string
  * @returns {boolean}
  */
-export function isDefault(string) {
+export function isDefaultCase(string) {
     const match = standardPattern.exec(string);
     return match !== null;
 }

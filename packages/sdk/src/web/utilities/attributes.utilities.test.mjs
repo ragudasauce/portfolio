@@ -3,10 +3,11 @@ import {
     convertCamelToKebabCase,
     convertKebabToCamelCase,
     createAttributeDescription,
+    createIDLName,
     errorMessages,
     formatAttributeName,
     isCamelCase,
-    isDefault,
+    isDefaultCase,
     isKebabCase,
 } from './attributes.utilities.mjs';
 
@@ -28,6 +29,67 @@ describe('The Attribute Utillities Module', () => {
             expect(result).toEqual(expected);
         });
     });
+
+    describe('the createIDLName method', () => {
+        test('should convert a kebab-case-string to camelCase', () => {
+            let string = 'test-string';
+            let result = createIDLName(string);
+            let expected = 'testString';
+            expect(result).toBe(expected);
+
+            string = 'test-string-more-kebab';
+            result = createIDLName(string);
+            expected = 'testStringMoreKebab'
+            expect(result).toBe(expected);
+        });
+
+        test('should convert a snake case string to camel case', () => {
+            let string = 'test_string';
+            let result = createIDLName(string);
+            let expected = 'testString';
+            expect(result).toBe(expected);
+
+            string = 'test_string_more_kebab';
+            result = createIDLName(string);
+            expected = 'testStringMoreKebab'
+            expect(result).toBe(expected);
+        })
+
+        test('should convert a string with spaces to camelCase', () => {
+            let string = 'test string';
+            let result = createIDLName(string);
+            let expected = 'testString';
+            expect(result).toBe(expected);
+
+            string = 'test string more kebab';
+            result = createIDLName(string);
+            expected = 'testStringMoreKebab'
+            expect(result).toBe(expected);
+        })
+
+        test('should convert a mixed case string to camelCase', () => {
+            let string = 'test_string';
+            let result = createIDLName(string);
+            let expected = 'testString';
+            expect(result).toBe(expected);
+
+            string = 'test_string-more kebab';
+            result = createIDLName(string);
+            expected = 'testStringMoreKebab'
+            expect(result).toBe(expected);
+        })
+
+        test('should have no effect on a camelCase string', () => {
+            let string = 'testString';
+            let result = createIDLName(string);
+            expect(result).toBe(string);
+        })
+        test('should have no effect on a string with only letters', () => {
+            let string = 'test';
+            let result = createIDLName(string);
+            expect(result).toBe(string);
+        });
+    })
 
     describe('the formatAttributeName function', () => {
         test('should return an unchanged string if the string is a default string', () => {
@@ -90,18 +152,18 @@ describe('The Attribute Utillities Module', () => {
     describe('the isDefault function', () => {
         test('should return true when the input is a single, lowercase word', () => {
             const input = 'thisiscorrect';
-            const result = isDefault(input);
+            const result = isDefaultCase(input);
             const expected = true;
             expect(result).toBe(expected);
         });
         test('should return false when the input is not a single, lowercase word', () => {
             let input = 'thisIsNotCorrect';
-            let result = isDefault(input);
+            let result = isDefaultCase(input);
             const expected = false;
             expect(result).toBe(expected);
 
             input = 'more than one word';
-            result = isDefault(input);
+            result = isDefaultCase(input);
             expect(result).toBe(expected);
         });
     });

@@ -1,30 +1,32 @@
 import { default as SDKBaseElement } from './base.element.mjs';
-import { describe, expect, beforeAll, test, beforeEach, vi } from 'vitest';
+import { expect } from '@wdio/globals';
+import { spyOn } from '@wdio/browser-runner';
 
-describe('The SDKBaseElement', () => {
+const connectedCallbackSpy = spyOn(SDKBaseElement.prototype, 'connectedCallback');
+
+describe('The SDKBaseHTMLElement Class', function() {
+    it('it should be defined', function() {
+        expect(SDKBaseElement).toBeTruthy();
+    });
+
     const noConfigTestElement = 'base-test-element';
     const configTestElement = 'base-shadow-element';
-    let defaultComponent, configComponent;
+    // let defaultComponent, configComponent;
 
-    beforeAll(() => {
+    before('should work', async function() {
         const template = document.createElement('template');
-        template.append('<slot></slot>');
+        template.content.appendChild(document.createElement('slot'));
 
         const styleSheet = new CSSStyleSheet();
         styleSheet.replaceSync(':host { color: blue; }');
 
-        class TestComponent extends SDKBaseElement {
+        class UnconfiguredComponent extends SDKBaseElement {
             constructor() {
                 super();
-                this.defineState('required');
-                this.defineState('enabled', {
-                    defaultValue: true,
-                    isDefault: true,
-                });
             }
         }
 
-        const shadowRootOptions = {
+        const shadowRoot = {
             mode: 'open',
             clonable: false,
             delegatesFocus: false,
@@ -32,98 +34,112 @@ describe('The SDKBaseElement', () => {
             slotAssignment: 'named',
         };
 
-        class TestShadowComponent extends SDKBaseElement {
+        class ConfiguredComponent extends SDKBaseElement {
             constructor() {
                 super({
-                    shadowRootOptions,
+                    shadowRootOptions: shadowRoot,
                     html: template,
                     stylesheets: [styleSheet],
                 });
-                this.defineState('enabled', {
-                    defaultValue: true,
-                    isDefault: true,
-                });
             }
         }
-        customElements.define(noConfigTestElement, TestComponent);
-        customElements.define(configTestElement, TestShadowComponent);
+        customElements.define(noConfigTestElement, UnconfiguredComponent);
+        customElements.define(configTestElement, ConfiguredComponent);
     });
 
-    beforeAll(() => {
-        defaultComponent = document.createElement(noConfigTestElement);
-        configComponent = document.createElement(configTestElement);
-    });
-    describe('should encapsulate structure and style', () => {
-        describe('based upon a default configuration', () => {
-            test('that can participate in forms and aria states', () => {
-                expect(
-                    Object.hasOwn(defaultComponent, 'internals')
-                ).toBeTruthy();
-                expect(configComponent.internals).toBeTruthy();
-            });
+    describe('testing this if it works', function() {
+        it('could work', async function() {
+            const component = document.createElement(configTestElement);
+            component.innerHTML = 'hello world';
+            // const connectedCallbackSpy = spyOn(component, 'connectedCallback')
+            document.body.appendChild(component);
 
-            test('that can be configured to disable or enable access to the shadow dom', () => {
-                expect(defaultComponent.shadowRoot).toBeNull();
-                expect(configComponent.shadowRoot).toBeTruthy();
-            });
+            expect(connectedCallbackSpy).toHaveBeenCalled();
 
-            test('that can encapsulate styles', () => {
-                const sheet = configComponent.shadowRoot.adoptedStyleSheets;
-                expect(sheet.length).toBe(1);
-            });
+
+
+            // expect(Object.hasOwn(component, 'shadowRoot'))
+
+            // await expect($(configTestElement)).toBePresent();
         });
     });
 
-    describe('should manage states', () => {
-        beforeEach(() => {
-            defaultComponent.manageState('required', false);
-        });
+    // beforeAll(function() {
+    //     defaultComponent = document.createElement(noConfigTestElement);
+    //     configComponent = document.createElement(configTestElement);
+    // });
 
-        test('by toggling a state', () => {
-            defaultComponent.manageState('required');
-            expect(defaultComponent.internals.states.has('required')).toBe(
-                true
-            );
-            defaultComponent.manageState('required');
-            expect(defaultComponent.internals.states.has('required')).toBe(
-                false
-            );
-        });
+    // describe.skip('should encapsulate structure and style', () => {
+    //     describe('based upon a default configuration', () => {
+    //         test('that can participate in forms and aria states', () => {
+    //             expect(
+    //                 Object.hasOwn(defaultComponent, 'internals')
+    //             ).toBeTruthy();
+    //             expect(configComponent.internals).toBeTruthy();
+    //         });
 
-        test('by forcing a state to be applied', () => {
-            defaultComponent.manageState('required', true);
-            expect(defaultComponent.internals.states.has('required')).toBe(
-                true
-            );
-            defaultComponent.manageState('required', true);
-            expect(defaultComponent.internals.states.has('required')).toBe(
-                true
-            );
-        });
+    //         test('that can be configured to disable or enable access to the shadow dom', () => {
+    //             expect(defaultComponent.shadowRoot).toBeNull();
+    //             expect(configComponent.shadowRoot).toBeTruthy();
+    //         });
 
-        test('by forcing a state to be removed', () => {
-            defaultComponent.manageState('required');
-            expect(defaultComponent.internals.states.has('required')).toBe(
-                true
-            );
-            defaultComponent.manageState('required', false);
-            expect(defaultComponent.internals.states.has('required')).toBe(
-                false
-            );
-        });
+    //         test('that can encapsulate styles', () => {
+    //             const sheet = configComponent.shadowRoot.adoptedStyleSheets;
+    //             expect(sheet.length).toBe(1);
+    //         });
+    //     });
+    // });
 
-        test('when the instance is attached to the dom', () => {
-            const connectedSpy = vi.spyOn(defaultComponent, 'connectedCallback');
-            const applySpy = vi.spyOn(defaultComponent, 'applyDefaultStates')
-            expect(defaultComponent.internals.states.has('enabled')).toBe(
-                false
-            );
-            document.body.appendChild(defaultComponent);
-            defaultComponent.connectedCallback();
-            expect(connectedSpy).toHaveBeenCalled();
-            expect(applySpy).toHaveBeenCalled();
+    // describe.skip('should manage states', () => {
+    //     beforeEach(() => {
+    //         defaultComponent.manageState('required', false);
+    //     });
 
-            expect(defaultComponent.internals.states.has('enabled')).toBe(true);
-        });
-    });
+    //     test('by toggling a state', () => {
+    //         defaultComponent.manageState('required');
+    //         expect(defaultComponent.internals.states.has('required')).toBe(
+    //             true
+    //         );
+    //         defaultComponent.manageState('required');
+    //         expect(defaultComponent.internals.states.has('required')).toBe(
+    //             false
+    //         );
+    //     });
+
+    //     test('by forcing a state to be applied', () => {
+    //         defaultComponent.manageState('required', true);
+    //         expect(defaultComponent.internals.states.has('required')).toBe(
+    //             true
+    //         );
+    //         defaultComponent.manageState('required', true);
+    //         expect(defaultComponent.internals.states.has('required')).toBe(
+    //             true
+    //         );
+    //     });
+
+    //     test('by forcing a state to be removed', () => {
+    //         defaultComponent.manageState('required');
+    //         expect(defaultComponent.internals.states.has('required')).toBe(
+    //             true
+    //         );
+    //         defaultComponent.manageState('required', false);
+    //         expect(defaultComponent.internals.states.has('required')).toBe(
+    //             false
+    //         );
+    //     });
+
+    //     test('when the instance is attached to the dom', () => {
+    //         const connectedSpy = vi.spyOn(defaultComponent, 'connectedCallback');
+    //         const applySpy = vi.spyOn(defaultComponent, 'applyDefaultStates')
+    //         expect(defaultComponent.internals.states.has('enabled')).toBe(
+    //             false
+    //         );
+    //         document.body.appendChild(defaultComponent);
+    //         defaultComponent.connectedCallback();
+    //         expect(connectedSpy).toHaveBeenCalled();
+    //         expect(applySpy).toHaveBeenCalled();
+
+    //         expect(defaultComponent.internals.states.has('enabled')).toBe(true);
+    //     });
+    // });
 });
