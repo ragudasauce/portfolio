@@ -8,10 +8,17 @@
     ".": "./lib"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.9.0",
     "@types/typescript": "^0.4.29",
     "@vitest/browser": "^2.1.5",
     "@vitest/coverage-istanbul": "^2.1.5",
+    "@wdio/browser-runner": "^9.3.1",
+    "@wdio/cli": "^9.3.1",
+    "@wdio/mocha-framework": "^9.2.8",
+    "@wdio/spec-reporter": "^9.2.14",
+    "@wdio/visual-service": "^6.2.2",
+    "eslint-plugin-mocha": "^10.5.0",
     "glob": "^11.0.0",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",
@@ -24,7 +31,8 @@
     "postbuild": "tsc",
     "vite": "vite",
     "test:browser": "vitest --workspace=vitest.workspace.mjs",
-    "test:coverage": "npm run test:browser --coverage"
+    "test:coverage": "npm run test:browser --coverage",
+    "wdio": "wdio run ./wdio.conf.js"
   },
   "author": "",
   "license": "ISC"

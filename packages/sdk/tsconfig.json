@@ -21,7 +21,11 @@
     // "Go to Definition" in VSCode
     "declarationMap": true,
     "types": [
-      "@vitest/browser/providers/webdriverio"
+      "@vitest/browser/providers/webdriverio",
+      "@wdio/globals/types",
+      "@wdio/mocha-framework",
+      "@types/mocha"
+      // "@wdio/lighthouse-service"
     ]
   }
 }

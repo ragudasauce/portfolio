@@ -287,20 +287,20 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
         states[key](name);
     }
 
-    applyDefaultStates() {
-        this[STATES_MAP].entries()
-            .reduce((acc, entry) => {
-                const name = entry[0];
-                const options = entry[1];
-                if (options.isDefault === true) {
-                    acc.push(name);
-                }
-                return acc;
-            }, [])
-            .forEach((state) => {
-                this.manageState(state, true);
-            });
-    }
+    // applyDefaultStates() {
+    //     this[STATES_MAP].entries()
+    //         .reduce((acc, entry) => {
+    //             const name = entry[0];
+    //             const options = entry[1];
+    //             if (options.isDefault === true) {
+    //                 acc.push(name);
+    //             }
+    //             return acc;
+    //         }, [])
+    //         .forEach((state) => {
+    //             this.manageState(state, true);
+    //         });
+    // }
 
     upgradeProperty(prop) {
         if (Object.hasOwn(this, prop)) {
@@ -311,14 +311,17 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
     }
 
     upgradeProperties() {
-        Array.from(this[UPGRADABLE_PROPERTIES]).forEach((prop) =>
-            this.upgradeProperty(prop)
-        );
+        if (this[UPGRADABLE_PROPERTIES] !== undefined) {
+            console.log('UPGRADABLE PROPERTIES', this[UPGRADABLE_PROPERTIES]);
+            Array.from(this[UPGRADABLE_PROPERTIES]).forEach((prop) =>
+                this.upgradeProperty(prop)
+            );
+        }
     }
 
     connectedCallback() {
         this.upgradeProperties();
-        this.applyDefaultStates();
+        // this.applyDefaultStates();
     }
 };
 
