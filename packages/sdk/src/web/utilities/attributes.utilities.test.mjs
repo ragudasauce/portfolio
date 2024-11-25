@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+// import { describe, expect, test } from 'vitest';
 import {
     convertCamelToKebabCase,
     convertKebabToCamelCase,
@@ -10,10 +10,12 @@ import {
     isDefaultCase,
     isKebabCase,
 } from './attributes.utilities.mjs';
+import { expect } from '@wdio/globals';
 
-describe('The Attribute Utillities Module', () => {
-    describe('the convertCamelToKebabCase method', () => {
-        test('should convert the camelCaseString to a kebab-case-string', () => {
+
+describe('The Attribute Utillities Module', function() {
+    describe('the convertCamelToKebabCase method', function() {
+        it('should convert the camelCaseString to a kebab-case-string', function() {
             const string = 'thisIsACamelString';
             const expected = 'this-is-a-camel-string';
             const result = convertCamelToKebabCase(string);
@@ -21,8 +23,8 @@ describe('The Attribute Utillities Module', () => {
         });
     });
 
-    describe('the convertKebabToCamelCase method', () => {
-        test('should convert a kebab-case-string to a camelCaseString', () => {
+    describe('the convertKebabToCamelCase method', function() {
+        it('should convert a kebab-case-string to a camelCaseString', function() {
             const string = 'this-is-a-camel-string';
             const expected = 'thisIsACamelString';
             const result = convertKebabToCamelCase(string);
@@ -30,8 +32,8 @@ describe('The Attribute Utillities Module', () => {
         });
     });
 
-    describe('the createIDLName method', () => {
-        test('should convert a kebab-case-string to camelCase', () => {
+    describe('the createIDLName method', function() {
+        it('should convert a kebab-case-string to camelCase', function() {
             let string = 'test-string';
             let result = createIDLName(string);
             let expected = 'testString';
@@ -43,7 +45,7 @@ describe('The Attribute Utillities Module', () => {
             expect(result).toBe(expected);
         });
 
-        test('should convert a snake case string to camel case', () => {
+        it('should convert a snake case string to camel case', function() {
             let string = 'test_string';
             let result = createIDLName(string);
             let expected = 'testString';
@@ -55,7 +57,7 @@ describe('The Attribute Utillities Module', () => {
             expect(result).toBe(expected);
         })
 
-        test('should convert a string with spaces to camelCase', () => {
+        it('should convert a string with spaces to camelCase', function() {
             let string = 'test string';
             let result = createIDLName(string);
             let expected = 'testString';
@@ -67,7 +69,7 @@ describe('The Attribute Utillities Module', () => {
             expect(result).toBe(expected);
         })
 
-        test('should convert a mixed case string to camelCase', () => {
+        it('should convert a mixed case string to camelCase', function() {
             let string = 'test_string';
             let result = createIDLName(string);
             let expected = 'testString';
@@ -79,65 +81,69 @@ describe('The Attribute Utillities Module', () => {
             expect(result).toBe(expected);
         })
 
-        test('should have no effect on a camelCase string', () => {
+        it('should have no effect on a camelCase string', function() {
             let string = 'testString';
             let result = createIDLName(string);
             expect(result).toBe(string);
-        })
-        test('should have no effect on a string with only letters', () => {
+        });
+
+        it('should have no effect on a string with only letters', function() {
             let string = 'test';
             let result = createIDLName(string);
             expect(result).toBe(string);
         });
     })
 
-    describe('the formatAttributeName function', () => {
-        test('should return an unchanged string if the string is a default string', () => {
+    describe('the formatAttributeName function', function() {
+        it('should return an unchanged string if the string is a default string', function() {
             const string = 'attribute';
             const expected = string;
             const result = formatAttributeName(string);
             expect(result).toBe(expected);
         });
 
-        test('should return an unchanged string if the string is a camelCase string', () => {
+        it('should return an unchanged string if the string is a camelCase string', function() {
             const string = 'attributeString';
             const expected = string;
             const result = formatAttributeName(string);
             expect(result).toBe(expected);
         });
-        test('should return a camelCase string if a kebab-case-string was passed', () => {
+
+        it('should return a camelCase string if a kebab-case-string was passed', function() {
             const string = 'attribute-string';
             const expected = 'attributeString';
             const result = formatAttributeName(string);
             expect(result).toBe(expected);
         });
-        test('should throw an error if an attribute does not meet kebab, camel, or single word crtesteria', () => {
+
+        it('should throw an error if an attribute does not meet kebab, camel, or single word crtesteria', function() {
             const expected = new Error(errorMessages.FORMAT);
-            expect(() => formatAttributeName('some string')).toThrowError(
+            expect(function(){ formatAttributeName('some string')}).toThrow(
                 expected
             );
         });
     });
 
-    describe('the isCamelCase function', () => {
-        test('should return true when the input is camelCase', () => {
+    describe('the isCamelCase function', function() {
+        it('should return true when the input is camelCase', function() {
             const input = 'thisIsCorrect';
             const result = isCamelCase(input);
             const expected = true;
             expect(result).toBe(expected);
         });
-        test('should return false when the input is not camelCase', () => {
+
+        it('should return false when the input is not camelCase', function() {
             expect(isCamelCase('this-is-not-camel')).toBe(false);
         });
     });
 
-    describe('the isKebabCase function', () => {
-        test('should return true when the input is kebab-case', () => {
+    describe('the isKebabCase function', function() {
+        it('should return true when the input is kebab-case', function() {
             // expect(isKebabCase('this-is-also-correct')).toBeTruthy();
             expect(isKebabCase('this-correct')).toBeTruthy();
         });
 
-        test('should return false when the input is not kebab-case', () => {
+        it('should return false when the input is not kebab-case', function() {
             let input = 'thisIsNotCorrect';
             let result = isKebabCase(input);
             const expected = false;
@@ -149,14 +155,15 @@ describe('The Attribute Utillities Module', () => {
         });
     });
 
-    describe('the isDefault function', () => {
-        test('should return true when the input is a single, lowercase word', () => {
+    describe('the isDefault function', function() {
+        it('should return true when the input is a single, lowercase word', function() {
             const input = 'thisiscorrect';
             const result = isDefaultCase(input);
             const expected = true;
             expect(result).toBe(expected);
         });
-        test('should return false when the input is not a single, lowercase word', () => {
+
+        it('should return false when the input is not a single, lowercase word', function() {
             let input = 'thisIsNotCorrect';
             let result = isDefaultCase(input);
             const expected = false;
@@ -168,8 +175,8 @@ describe('The Attribute Utillities Module', () => {
         });
     });
 
-    describe('the createAttributeDescription function', () => {
-        test('should return an object to set data properties', () => {
+    describe('the createAttributeDescription function', function() {
+        it('should return an object to set data properties', function() {
             const writable = true;
             const value = 2;
             const expected = {
@@ -183,7 +190,8 @@ describe('The Attribute Utillities Module', () => {
             });
             expect(result).toEqual(expected);
         });
-        test('should return an object to set accessor properties', () => {
+        
+        it('should return an object to set accessor properties', function() {
             const result = createAttributeDescription({
                 get() {
                     return this.value;
@@ -201,7 +209,7 @@ describe('The Attribute Utillities Module', () => {
             expect(Object.hasOwn(result, 'someProp')).toBe(false);
         });
 
-        test('should return a data property if both data and accessor properties are sent', () => {
+        it('should return a data property if both data and accessor properties are sent', function() {
             const writable = true;
             const value = 2;
             const expected = {

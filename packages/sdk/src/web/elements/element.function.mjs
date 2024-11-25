@@ -2,14 +2,18 @@ import {
     convertCamelToKebabCase,
     createAttributeDescription,
     createIDLName,
+    formatAttributeName,
 } from '../utilities/attributes.utilities.mjs';
 import { createStateDescriptor } from '../utilities/states.utilities.mjs';
 import { createAriaDescriptor } from '../utilities/aria.utilities.mjs';
 import {
     ARIA_MAP,
+    INTERNALS,
+    INTERNALS_MAP,
+    NAME,
     OBSERVED_ATTRIBUTES,
     STATES_MAP,
-    UPGRADABLE_PROPERTIES,
+    UPGRADABLE_PROPERTIES_SET,
 } from '../constants/property.name.constants.mjs';
 
 /**
@@ -74,27 +78,26 @@ import {
  * @property { AttributeConfiguration[] } [attributes]
  */
 
-function configureAria(targetClass, ariaConfig = {}) {
-    if (Object.keys(ariaConfig).length === 0) {
+function configureInternals(targetClass, internalsConfig = {}) {
+    if (Object.keys(internalsConfig).length === 0) {
         return;
     }
 
-    if (Object.hasOwn(ariaConfig, 'role') && !Object.hasOwn(targetClass, 'role')) {
-        Object.defineProperty(targetClass, 'role', { value: ariaConfig.role });
+    if (!Object.hasOwn(targetClass, INTERNALS_MAP)) {
+        Object.defineProperty(targetClass, INTERNALS_MAP, { value: new Map() });
     }
 
-    if (Object.hasOwn(ariaConfig, 'propertiesAndStates')) {
-        if (!Object.hasOwn(targetClass, ARIA_MAP)) {
-            Object.defineProperty(targetClass, ARIA_MAP, {
-                value: new Map(),
-            });
+    const internalsMap = targetClass[INTERNALS_MAP];
+
+    Object.entries(internalsConfig).forEach(entry => {
+        const propertyKey = formatAttributeName(entry[0])
+        const value = entry[1];
+        if (propertyKey !== 'states') {
+            internalsMap.set(propertyKey, value);
+        } else {
+            internalsMap.set(propertyKey, value.map((state) => createStateDescriptor(state)))
         }
-
-        ariaConfig.propertiesAndStates.forEach((propState) => {
-            const descriptor = createAriaDescriptor(propState);
-            targetClass[ARIA_MAP].set(propState.name, descriptor);
-        });
-    }
+    })
 }
 
 function configureProperties(targetClass, attributes = []) {
@@ -113,9 +116,9 @@ function configureProperties(targetClass, attributes = []) {
 
     const upgradableProperties = Object.hasOwn(
         targetClass,
-        UPGRADABLE_PROPERTIES
+        UPGRADABLE_PROPERTIES_SET
     )
-        ? targetClass[UPGRADABLE_PROPERTIES]
+        ? targetClass[UPGRADABLE_PROPERTIES_SET]
         : new Set();
 
     // NOTE: not sure why Object.hasOwn() is only working with 'static' class fields
@@ -145,7 +148,7 @@ function configureProperties(targetClass, attributes = []) {
 
         if (isUpgradable) {
             upgradableProperties.add(attributeIDLName);
-            acc[UPGRADABLE_PROPERTIES] = {
+            acc[UPGRADABLE_PROPERTIES_SET] = {
                 value: new Set().union(upgradableProperties),
             };
         }
@@ -166,35 +169,41 @@ function configureProperties(targetClass, attributes = []) {
     Object.defineProperties(targetClass.prototype, properties);
 }
 
-function configureStates(targetClass, states = []) {
-    if (states.length === 0) {
-        return;
-    }
+// function configureStates(targetMap, states = []) {
+//     if (states.length === 0) {
+//         return;
+//     }
 
-    if (!Object.hasOwn(targetClass, STATES_MAP)) {
-        Object.defineProperty(targetClass, STATES_MAP, { value: new Map() });
-    }
+//     // if (!Object.hasOwn(targetMap, STATES_MAP)) {
+//     //     Object.defineProperty(targetMap, STATES_MAP, { value: new Map() });
+//     // }
 
-    // states are either in the CustomStateSet or not
-    // making states boolean.
-    // States that are reflected to aria-states are also generally boolean,
-    // though the aria-state should convert the boolean to a string.
-    // a notable exception is 'aria-checked' which can also have the string 'mixed'
-    // set, indicating an indeterminate state.
+//     // states are either in the CustomStateSet or not
+//     // making states boolean.
+//     // States that are reflected to aria-states are also generally boolean,
+//     // though the aria-state should convert the boolean to a string.
+//     // a notable exception is 'aria-checked' which can also have the string 'mixed'
+//     // set, indicating an indeterminate state.
 
-    // in such a case, the indeterminate state is boolean, with the string 'mixed'
-    // associated to it.
+//     // in such a case, the indeterminate state is boolean, with the string 'mixed'
+//     // associated to it.
 
-    states.forEach((state) => {
-        const descriptor = createStateDescriptor(state.descriptor);
-        targetClass[STATES_MAP].set(state.name, descriptor);
-    });
-}
+//     states.forEach((state) => {
+//         const descriptor = createStateDescriptor(state);
+//         targetMap.states.set(state[NAME], descriptor);
+//     });
+// }
 
-export function createSDKElement(targetClass = class {}, config = {}) {
-    configureAria(targetClass, config.aria);
+/**
+ * @template {new (...args:any[]) => any} T
+ */
+export function createSDKElement(
+    /** @type {T} */ targetClass = class {},
+    /** @type { ClassConfigOptions} */ config = {}
+) {
+    configureInternals(targetClass, config.internals);
     configureProperties(targetClass, config.attributes);
-    configureStates(targetClass, config.states);
+    // configureStates(targetClass, config.states);
     return targetClass;
 }
 
@@ -204,178 +213,4 @@ export function createSDKElement(targetClass = class {}, config = {}) {
 //     // configureAria
 //     // configureProperties
 //     // configure states
-// }
-
-// /**
-//  * @extends HTMLElement
-//  * @method { function } adoptHTML
-//  */
-// const baseComponent = class extends HTMLElement {
-//     /**
-//      * @implements ShadowRootOptions
-//      */
-//     #shadowRootOptions = {z
-//         mode: 'closed',
-//         clonable: false,
-//         delegatesFocus: false,
-//         serializeable: false,
-//         slotAssignment: 'named',
-//     };
-
-//     /**
-//      * @implements StateOptions
-//      */
-//     #stateOptions = {
-//         isBoolean: true,
-//         values: [true, false],
-//         isDefault: false,
-//         defaultValue: false,
-//         ariaProperty: {},
-//     };
-
-//     // statesMap = new Map();
-
-//     constructor(config) {
-//         super(config);
-//         this.internals = this.attachInternals();
-//         this.upgradableProperties = new Set();
-
-//         this.configureShadowRoot(config.shadowRoot);
-//         this.adoptHTML(config.html);
-//         this.adoptStyleSheets(config.styles);
-//     }
-
-//     /**
-//      *
-//      * @param {string | HTMLTemplateElement} template
-//      */
-//     adoptHTML(template) {
-//         if (template !== undefined) {
-//             this.shadowRoot.append(template.content.cloneNode(true));
-//         }
-//     }
-
-//     /**
-//      * @memberof SDKBaseHTMLElement
-//      * @param {CSSStyleSheet[]} styles
-//      */
-//     adoptStyleSheets(styles) {
-//         if (styles) {
-//             this.shadowRoot.adoptedStyleSheets = [...styles];
-//         }
-//     }
-
-//     /**
-//      * Applies the default states to the component
-//      */
-//     applyDefaultStates() {
-//         this.statesMap
-//             .entries()
-//             .reduce((acc, entry) => {
-//                 const name = entry[0];
-//                 const options = entry[1];
-//                 if (options.isDefault === true) {
-//                     acc.push(name);
-//                 }
-//                 return acc;
-//             }, [])
-//             .forEach((state) => {
-//                 this.manageState(state, true);
-//             });
-//     }
-
-//     /**
-//      *
-//      * @param {ShadowRootOptions} options
-//      */
-//     configureShadowRoot(options) {
-//         if (options === undefined) {
-//             options = this.#shadowRootOptions;
-//         }
-//         this.attachShadow(options);
-//     }
-
-//     /**
-//      *
-//      * @param {string} name
-//      * @param {boolean} [force]
-//      */
-//     manageState(name, force) {
-//         // this needs to also work for states that have values.
-//         const states = this.internals.states;
-//         const hasState = states.has(name);
-//         const addCheck = Array.from(
-//             new Set([force === undefined && !hasState, force === true])
-//         ).includes(true);
-//         const key = addCheck ? 'add' : 'delete';
-
-//         states[key](name);
-//     }
-
-//     /**
-//      * Upgrades a property (get the google link)
-//      * @param {string} prop
-//      */
-//     upgradeProperty(prop) {
-//         if (Object.hasOwn(this, prop)) {
-//             let value = this[prop];
-//             delete this[prop];
-//             this[prop] = value;
-//         }
-//     }
-
-//     upgradeProperties() {
-//         Array.from(this.upgradableProperties).forEach((prop) =>
-//             this.upgradeProperty(prop)
-//         );
-//     }
-
-//     connectedCallback() {
-//         this.upgradeProperties();
-//         this.applyDefaultStates();
-//     }
-// };
-
-// const config = {
-//     // shadowRootOptions: {},
-//     // html: '',
-//     // styles: [],
-//     // states: []
-//     // aria: []
-//     attributes: [
-//         {
-//             name: LAYOUT_ORIENTATION,
-//             observable: true,
-//             allowableValues: [HORIZONTAL, VERTICAL],
-//             descriptor: {
-//                 enumerable: true,
-//                 set(value) {
-//                     this.setAttribute(LAYOUT_ORIENTATION, value);
-//                 },
-//                 get() {
-//                     return this.hasAttribute(LAYOUT_ORIENTATION)
-//                         ? this.getAttribute(LAYOUT_ORIENTATION)
-//                         : HORIZONTAL;
-//                 },
-//             },
-//         }
-//     ],
-// };
-
-// export const BaseComponent = createSDKElement(baseComponent, config);
-
-
-// aria: [
-//     {
-//         name: 'ariaSelected',
-//         value: 'true',
-//         allowableValues: [],
-//         isDefault: false,
-//         isRole: false
-//     }
-// ]
-
-// aria : {
-//     role: '',
-//     propertiesAndStates: []
 // }

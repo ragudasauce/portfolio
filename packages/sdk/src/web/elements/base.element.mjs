@@ -9,12 +9,15 @@
 
 import {
     STATES_MAP,
-    UPGRADABLE_PROPERTIES,
+    UPGRADABLE_PROPERTIES_SET,
     LAYOUT_ORIENTATION,
     ARIA_ORIENTATION,
+    ARIA_MAP,
+    INTERNALS,
 } from '../constants/property.name.constants.mjs';
 import {
     HORIZONTAL,
+    UNDEFINED,
     VERTICAL,
 } from '../constants/attribute.value.constants.mjs';
 import { createSDKElement } from './element.function.mjs';
@@ -221,17 +224,26 @@ import { createSDKElement } from './element.function.mjs';
  * @method { function } adoptHTML
  */
 const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
+    // Should these be on the base?
+    // Will adding to the map effect all elements?
+    // I think it will not, but we can test that.
+    static [ARIA_MAP] = new Map();
+    static [STATES_MAP] = new Map();
+    static [UPGRADABLE_PROPERTIES_SET] = new Set();
     /**
      *
      * @param {InstanceOptions} config
      */
     constructor(config = {}) {
         super();
-        this.internals = this.attachInternals();
+        this[INTERNALS] = this.attachInternals();
 
         this.configureShadowRoot(config.shadowRootOptions);
         this.adoptHTML(config.html);
         this.adoptStyleSheets(config.stylesheets);
+
+        // set up default states
+        // set up default aria
     }
 
     /**
@@ -240,7 +252,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
      */
     adoptHTML(template) {
         if (template !== undefined) {
-            this.shadowRoot.append(template.content.cloneNode(true));
+            this[INTERNALS].shadowRoot.append(template.content.cloneNode(true));
         }
     }
 
@@ -250,7 +262,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
      */
     adoptStyleSheets(stylesheets) {
         if (stylesheets) {
-            this.shadowRoot.adoptedStyleSheets = [...stylesheets];
+            this[INTERNALS].shadowRoot.adoptedStyleSheets = [...stylesheets];
         }
     }
 
@@ -270,6 +282,10 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
         this.attachShadow(options);
     }
 
+    manageAria(name, value) {
+        this[INTERNALS][name] = value;
+    }
+
     /**
      *
      * @param {string} name
@@ -277,7 +293,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
      */
     manageState(name, force) {
         // this needs to also work for states that have values.
-        const states = this.internals.states;
+        const states = this[INTERNALS].states;
         const hasState = states.has(name);
         const addCheck = Array.from(
             new Set([force === undefined && !hasState, force === true])
@@ -287,20 +303,28 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
         states[key](name);
     }
 
-    // applyDefaultStates() {
-    //     this[STATES_MAP].entries()
-    //         .reduce((acc, entry) => {
-    //             const name = entry[0];
-    //             const options = entry[1];
-    //             if (options.isDefault === true) {
-    //                 acc.push(name);
-    //             }
-    //             return acc;
-    //         }, [])
-    //         .forEach((state) => {
-    //             this.manageState(state, true);
-    //         });
-    // }
+    applyDefaultStates() {
+        this[STATES_MAP].entries()
+            .reduce((acc, entry) => {
+                const name = entry[0];
+                const options = entry[1];
+                if (options.isDefault === true) {
+                    acc.push(name);
+                }
+                return acc;
+            }, [])
+            .forEach((state) => {
+                this.manageState(state, true);
+            });
+    }
+
+    applyDefaultAria() {
+        this[ARIA_MAP].entries().forEach((entry) => {
+            const name = entry[0];
+            const value = entry[1];
+            this.manageAria(name, value);
+        });
+    }
 
     upgradeProperty(prop) {
         if (Object.hasOwn(this, prop)) {
@@ -311,9 +335,12 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
     }
 
     upgradeProperties() {
-        if (this[UPGRADABLE_PROPERTIES] !== undefined) {
-            console.log('UPGRADABLE PROPERTIES', this[UPGRADABLE_PROPERTIES]);
-            Array.from(this[UPGRADABLE_PROPERTIES]).forEach((prop) =>
+        if (this[UPGRADABLE_PROPERTIES_SET] !== undefined) {
+            console.log(
+                'UPGRADABLE PROPERTIES',
+                this[UPGRADABLE_PROPERTIES_SET]
+            );
+            Array.from(this[UPGRADABLE_PROPERTIES_SET]).forEach((prop) =>
                 this.upgradeProperty(prop)
             );
         }
@@ -330,12 +357,19 @@ const config = {
     // html: '',
     // styles: [],
     // states: []
-    // aria: []
+    internals: {
+        [ARIA_ORIENTATION]: {
+            value: HORIZONTAL,
+            allowableValues: [ HORIZONTAL, VERTICAL, UNDEFINED]
+        }
+    },
     attributes: [
         {
             name: LAYOUT_ORIENTATION,
             observable: true,
+            updatable: true,
             allowableValues: [HORIZONTAL, VERTICAL],
+            defaultValue: HORIZONTAL,
             associatedAria: ARIA_ORIENTATION,
             descriptor: {
                 enumerable: true,

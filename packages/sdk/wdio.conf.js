@@ -21,7 +21,10 @@ export const config = {
     // of the config file unless it's absolute.
     //
     specs: [
-        './src/web/elements/base.element.test.mjs'
+        './src/web/elements/base.element.test.mjs',
+        './src/web/elements/element.function.test.mjs',
+        './src/web/utilities/states.utilities.test.mjs',
+        './src/web/utilities/attributes.utilities.test.mjs'
     ],
     // Patterns to exclude.
     exclude: [
@@ -61,7 +64,7 @@ export const config = {
     // Define all options that are relevant for the WebdriverIO instance here
     //
     // Level of logging verbosity: trace | debug | info | warn | error | silent
-    logLevel: 'info',
+    // logLevel: 'info',
     //
     // Set specific log levels per logger
     // loggers:
@@ -72,10 +75,11 @@ export const config = {
     // - @wdio/sumologic-reporter
     // - @wdio/cli, @wdio/config, @wdio/utils
     // Level of logging verbosity: trace | debug | info | warn | error | silent
-    // logLevels: {
-    //     webdriver: 'info',
-    //     '@wdio/appium-service': 'info'
-    // },
+    logLevels: {
+        webdriver: 'silent',
+        '@wdio/mocha-framework': 'info'
+        // '@wdio/appium-service': 'info'
+    },
     //
     // If you only want to run your tests until a specific amount of tests have failed use
     // bail (default is 0 - don't bail, run all tests).

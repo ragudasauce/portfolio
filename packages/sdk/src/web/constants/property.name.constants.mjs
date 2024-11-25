@@ -1,6 +1,13 @@
 export const ARIA_MAP = 'ariaMap';
 export const ARIA_ORIENTATION = 'ariaOrientation';
+export const ARIA_VALUE = 'ariaValue';
+export const ASSOCIATED_ARIA_PROPERTY = 'associateAria';
+export const DEFAULT_VALUE = 'defaultValue';
+export const INTERNALS = 'internals_';
+export const INTERNALS_MAP = 'internalsMap';
+export const IS_DEFAULT = 'isDefault';
 export const LAYOUT_ORIENTATION = 'layoutOrientation';
+export const NAME = 'name';
 export const OBSERVED_ATTRIBUTES = 'observedAttributes';
 export const STATES_MAP = 'statesMap';
-export const UPGRADABLE_PROPERTIES = 'upgradableProperties';
+export const UPGRADABLE_PROPERTIES_SET = 'upgradablePropertiesSet';
