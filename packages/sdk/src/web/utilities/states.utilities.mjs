@@ -6,14 +6,16 @@ import { sanitizeObject } from './object.utilitites.mjs';
  * @property { string } [ariaValue]
  */
 
-import { ASSOCIATED_ARIA_PROPERTY, ARIA_VALUE, IS_DEFAULT, NAME } from '../constants/property.name.constants.mjs';
+import {
+    ASSOCIATED_ARIA_PROPERTY,
+    ARIA_VALUE,
+    NAME,
+    DEFAULT_ENABLED,
+} from '../constants/property.name.constants.mjs';
 
-const requiredKeys = new Set().add(NAME);
-const optionalKeys = new Set()
-    .add(IS_DEFAULT)
-    .add(ASSOCIATED_ARIA_PROPERTY)
-    .add(ARIA_VALUE);
-
+const defaults = { [DEFAULT_ENABLED]: false };
+const requiredKeys = new Set().add(NAME).add(DEFAULT_ENABLED);
+const optionalKeys = new Set().add(ASSOCIATED_ARIA_PROPERTY).add(ARIA_VALUE);
 const message = {
     descriptor: `Missing one or more required properties: ${Array.from(requiredKeys).join('|')}`,
 };
@@ -24,9 +26,10 @@ const message = {
  * @returns {StateDescriptor}
  */
 export function createStateDescriptor(descriptor = {}) {
+    const merged = Object.assign(defaults, descriptor);
     const sanitizedDescriptor = sanitizeObject(
         Array.from(requiredKeys.union(optionalKeys)),
-        descriptor
+        merged
     );
     const sanitizedKeys = new Set(Object.keys(sanitizedDescriptor));
     const requiredSet = sanitizedKeys.intersection(requiredKeys);

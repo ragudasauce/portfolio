@@ -7,12 +7,9 @@ import {
 import { createStateDescriptor } from '../utilities/states.utilities.mjs';
 import { createAriaDescriptor } from '../utilities/aria.utilities.mjs';
 import {
-    ARIA_MAP,
-    INTERNALS,
+    DESCRIPTOR,
     INTERNALS_MAP,
-    NAME,
     OBSERVED_ATTRIBUTES,
-    STATES_MAP,
     UPGRADABLE_PROPERTIES_SET,
 } from '../constants/property.name.constants.mjs';
 
@@ -22,6 +19,7 @@ import {
  */
 
 /**
+ * NOTE THIS NEEDS WORK. I THINK ITS A RECORD.
  * @typedef { object } AriaConfiguration
  * @property { string } role
  * @property { AriaPropertiesAndStates } propertiesAndStates
@@ -29,10 +27,8 @@ import {
 
 /**
  * @typedef { object } AriaPropertiesAndStates
- * @property { string[] } allowableValues
- * @property { boolean } isDefault=false
- * @property { string } name
- * @property { string } value
+ * @property { string[] } [allowableValues]
+ * @property { string } defaultValue
  */
 
 /**
@@ -47,12 +43,7 @@ import {
 /**
  * @typedef { object } StateConfiguration
  * @property {string} name
- * @param {StateDescriptor} [descriptor]
- */
-
-/**
- * @typedef { object } StateDescriptor
- * @property { boolean } [isDefault]
+ * @property { boolean } [defaultEnabled=false]
  * @property { string } [associatedAria=null]
  * @property { string } [ariaValue]
  */
@@ -84,23 +75,32 @@ function configureInternals(targetClass, internalsConfig = {}) {
     }
 
     if (!Object.hasOwn(targetClass, INTERNALS_MAP)) {
-        Object.defineProperty(targetClass, INTERNALS_MAP, { value: new Map() });
+        Object.defineProperty(targetClass.prototype, INTERNALS_MAP, { value: new Map() });
     }
 
-    const internalsMap = targetClass[INTERNALS_MAP];
+    const internalsMap = targetClass.prototype[INTERNALS_MAP];
 
     Object.entries(internalsConfig).forEach(entry => {
         const propertyKey = formatAttributeName(entry[0])
         const value = entry[1];
-        if (propertyKey !== 'states') {
-            internalsMap.set(propertyKey, value);
-        } else {
+        if (propertyKey.includes('aria')) {
+            internalsMap.set(propertyKey, createAriaDescriptor(value));
+            return;
+        } 
+        
+        if (propertyKey === 'states') {
             internalsMap.set(propertyKey, value.map((state) => createStateDescriptor(state)))
+            return;
+        }
+
+        if (propertyKey === 'role') {
+            internalsMap.set(propertyKey, value);
+            return;
         }
     })
 }
 
-function configureProperties(targetClass, attributes = []) {
+function configureAttributes(targetClass, attributes = []) {
     if (attributes.length === 0) {
         return;
     }
@@ -135,7 +135,7 @@ function configureProperties(targetClass, attributes = []) {
         const attributeIDLName = createIDLName(attribute.name);
         const isObservable = attribute.observable === true;
         const isUpgradable = attribute.upgradable === true;
-        const descriptor = createAttributeDescription(attribute.descriptor);
+        const descriptor = createAttributeDescription(attribute[DESCRIPTOR]);
 
         if (isObservable) {
             observedAttributes.add(convertCamelToKebabCase(attributeIDLName));
@@ -166,33 +166,8 @@ function configureProperties(targetClass, attributes = []) {
         return acc;
     }, {});
 
-    Object.defineProperties(targetClass.prototype, properties);
+    Object.defineProperties(targetClass, properties);
 }
-
-// function configureStates(targetMap, states = []) {
-//     if (states.length === 0) {
-//         return;
-//     }
-
-//     // if (!Object.hasOwn(targetMap, STATES_MAP)) {
-//     //     Object.defineProperty(targetMap, STATES_MAP, { value: new Map() });
-//     // }
-
-//     // states are either in the CustomStateSet or not
-//     // making states boolean.
-//     // States that are reflected to aria-states are also generally boolean,
-//     // though the aria-state should convert the boolean to a string.
-//     // a notable exception is 'aria-checked' which can also have the string 'mixed'
-//     // set, indicating an indeterminate state.
-
-//     // in such a case, the indeterminate state is boolean, with the string 'mixed'
-//     // associated to it.
-
-//     states.forEach((state) => {
-//         const descriptor = createStateDescriptor(state);
-//         targetMap.states.set(state[NAME], descriptor);
-//     });
-// }
 
 /**
  * @template {new (...args:any[]) => any} T
@@ -202,8 +177,7 @@ export function createSDKElement(
     /** @type { ClassConfigOptions} */ config = {}
 ) {
     configureInternals(targetClass, config.internals);
-    configureProperties(targetClass, config.attributes);
-    // configureStates(targetClass, config.states);
+    configureAttributes(targetClass, config.attributes);
     return targetClass;
 }
 

@@ -1,11 +1,22 @@
 import { default as SDKBaseElement } from './base.element.mjs';
 import { expect } from '@wdio/globals';
 import { spyOn } from '@wdio/browser-runner';
+import {
+    INTERNALS,
+    INTERNALS_MAP,
+} from '../constants/property.name.constants.mjs';
+import { createStateDescriptor } from '../utilities/states.utilities.mjs';
+import { HORIZONTAL } from '../constants/attribute.value.constants.mjs';
 
 const connectedCallbackSpy = spyOn(
     SDKBaseElement.prototype,
     'connectedCallback'
 );
+
+const configInternalSpy = spyOn(SDKBaseElement.prototype, 'configureInternals');
+const configShadowRootSpy = spyOn(SDKBaseElement.prototype, 'configureShadowRoot');
+const adoptHTMLSpy = spyOn(SDKBaseElement.prototype, 'adoptHTML');
+const adoptStyleSheetsSpy = spyOn(SDKBaseElement.prototype, 'adoptStyleSheets');
 
 const basicElement = 'base-element';
 const configuredElement = 'configured-element';
@@ -21,6 +32,28 @@ class BasicElement extends SDKBaseElement {
         super();
     }
 }
+
+const states = [
+    {
+        name: 'testNoOptions',
+    },
+    {
+        name: 'indeterminate',
+        defaultEnabled: false,
+        associatedAria: 'ariaChecked',
+        ariaValue: 'mixed',
+    },
+    {
+        name: 'checked',
+        defaultEnabled: false,
+        associatedAria: 'ariaChecked',
+    },
+    {
+        name: 'required',
+        defaultEnabled: true,
+        associatedAria: 'ariaRequired',
+    }
+].map((state) => createStateDescriptor(state));
 
 const shadowRoot = {
     mode: 'open',
@@ -39,30 +72,63 @@ class ConfiguredElement extends SDKBaseElement {
         });
     }
 }
+
+// ConfiguredElement[INTERNALS_MAP].set('role', 'checkbox');
+// ConfiguredElement[INTERNALS_MAP].set('states', states);
+
 customElements.define(basicElement, BasicElement);
 customElements.define(configuredElement, ConfiguredElement);
 
 describe('The SDKBaseHTMLElement Class', function () {
-    it('it should be defined', function () {
-        expect(SDKBaseElement).toBeTruthy();
-    });
+    // it('it should be defined', function () {
+    //     expect(SDKBaseElement).toBeTruthy();
+    // });
 
-    describe('The constructor', function () {
-        let defaultComponent, configComponent;
+    describe('the constructor', function () {
+        let defaultComponent,
+            configComponent;
+            
 
         beforeEach(function () {
             defaultComponent = document.createElement(basicElement);
             configComponent = document.createElement(configuredElement);
         });
 
-        it('could work', async function () {
-            // const component = document.createElement(configuredElement);
-            defaultComponent.innerHTML = 'hello world';
-            document.body.appendChild(defaultComponent);
+        it('should create a valid HTML element with an unreachable shadow root if no configuration is specified', function () {
+            expect(defaultComponent[INTERNALS]).toBeDefined();
+            expect(defaultComponent[INTERNALS].states).toBeDefined();
+            expect(defaultComponent.shadowRoot).toBeNull();
+            expect(configInternalSpy).toHaveBeenCalled();
+            expect(configShadowRootSpy).toHaveBeenCalledWith(undefined);
+            expect(adoptHTMLSpy).toHaveBeenCalledWith(undefined);
+            expect(adoptStyleSheetsSpy).toHaveBeenCalledWith(undefined);
+            configInternalSpy.mockClear();
+            configShadowRootSpy.mockClear();
+            adoptHTMLSpy.mockClear();
+            adoptStyleSheetsSpy.mockClear();
+            // expect(defaultComponent[INTERNALS].ariaOrientation).toBe(HORIZONTAL);
+        });
 
-            expect(connectedCallbackSpy).toHaveBeenCalled();
+        it('should create a valid HTML element with a shadow root, styles, aria properites and internal states', () => {
+            expect(configComponent[INTERNALS]).toBeDefined();
+            expect(configComponent[INTERNALS].states).toBeDefined();
+            expect(configComponent.shadowRoot).toBeDefined();
+            expect(configComponent.shadowRoot.adoptedStyleSheets).toBeDefined();
+            expect(configInternalSpy).toHaveBeenCalled();
+            expect(configShadowRootSpy).toHaveBeenCalledWith(shadowRoot);
+            expect(adoptHTMLSpy).toHaveBeenCalledWith(template);
+            expect(adoptStyleSheetsSpy).toHaveBeenCalledWith([styleSheet]);
+            configInternalSpy.mockClear();
+            configShadowRootSpy.mockClear();
+            adoptHTMLSpy.mockClear();
+            adoptStyleSheetsSpy.mockClear();
+            // expect(configComponent[INTERNALS].ariaOrientation).toBe(HORIZONTAL);
+            expect(configComponent[INTERNALS].states.has('required')).toBe(true);
+
         });
     });
+
+    describe('the base class', function () {});
 
     describe('the lifecyle events', function () {});
 

@@ -14,6 +14,15 @@ import {
     ARIA_ORIENTATION,
     ARIA_MAP,
     INTERNALS,
+    INTERNALS_MAP,
+    DEFAULT_ENABLED,
+    DEFAULT_VALUE,
+    ALLOWABLE_VALUES,
+    NAME,
+    ASSOCIATED_ARIA_PROPERTY,
+    OBSERVABLE,
+    UPDATABLE,
+    DESCRIPTOR,
 } from '../constants/property.name.constants.mjs';
 import {
     HORIZONTAL,
@@ -42,187 +51,6 @@ import { createSDKElement } from './element.function.mjs';
  * @extends HTMLElement
  * @method { function } adoptHTML
  */
-// export default class SDKBaseHTMLElement extends HTMLElement {
-//     #statesMap = new Map();
-//     #observableAttributesSet = new Set();
-//     #updatablePropertiesSet = new Set();
-
-//     /**
-//      * @implements ShadowRootOptions
-//      */
-//     #shadowRootOptions = {
-//         mode: 'closed',
-//         clonable: false,
-//         delegatesFocus: false,
-//         serializeable: false,
-//         slotAssignment: 'named',
-//     };
-
-//     /**
-//      * @implements StateOptions
-//      */
-//     #stateOptions = {
-//         isBoolean: true,
-//         values: [true, false],
-//         isDefault: false,
-//         defaultValue: false,
-//         ariaProperty: {},
-//     };
-
-//     /**
-//      *
-//      * @param {InstanceOptions} config
-//      */
-//     constructor(config = {}) {
-//         super();
-//         this.internals = this.attachInternals();
-
-//         this.configureShadowRoot(config.shadowRoot);
-//         this.adoptHTML(config.html);
-//         this.adoptStyleSheets(config.stylesheets);
-//     }
-
-//     /**
-//      *
-//      * @param {HTMLTemplateElement} template
-//      */
-//     adoptHTML(template) {
-//         if (template !== undefined) {
-//             this.shadowRoot.append(template.content.cloneNode(true));
-//         }
-//     }
-
-//     /**
-//      * @memberof SDKBaseHTMLElement
-//      * @param {*} stylesheets
-//      */
-//     adoptStyleSheets(stylesheets) {
-//         if (stylesheets) {
-//             this.shadowRoot.adoptedStyleSheets = [...stylesheets];
-//         }
-//     }
-
-//     /**
-//      *
-//      * @param {ShadowRootOptions} options
-//      */
-//     configureShadowRoot(options) {
-//         if (options === undefined) {
-//             options = this.#shadowRootOptions;
-//         }
-//         this.attachShadow(options);
-//     }
-
-//     /**
-//      *
-//      * @param {string} name
-//      * @param {StateOptions} options
-//      */
-//     defineState(name, options) {
-//         this.#statesMap.set(name, this.defineStateOptions(options));
-//     }
-
-//     /**
-//      *
-//      * @param {StateOptions} options
-//      * @returns {StateOptions}
-//      */
-//     defineStateOptions(options) {
-//         if (options === undefined) {
-//             return this.#stateOptions;
-//         }
-
-//         return Object.keys(this.#stateOptions).reduce((acc, key) => {
-//             acc[key] = Object.hasOwn(options, key)
-//                 ? options[key]
-//                 : this.#stateOptions[key];
-//             return acc;
-//         }, {});
-//     }
-
-//     /**
-//      *
-//      * @param {string[]} attributeNames
-//      */
-//     defineObservableAttributes(attributeNames) {
-//         attributeNames.forEach((name) =>
-//             this.#observableAttributesSet.add(name)
-//         );
-//     }
-
-//     /**
-//      *
-//      * @param {string[]} propertyNames
-//      */
-//     defineUpgradableProperties(propertyNames) {
-//         propertyNames.forEach((name) => this.#updatablePropertiesSet.add(name));
-//     }
-
-//     /**
-//      *
-//      * @returns {Set<string>}
-//      */
-//     retrieveObservableAttributes() {
-//         return this.#observableAttributesSet;
-//     }
-
-//     /**
-//      *
-//      * @param {string} name
-//      * @param {boolean} [force]
-//      */
-//     manageState(name, force) {
-//         // this needs to also work for states that have values.
-//         const states = this.internals.states;
-//         const hasState = states.has(name);
-//         const addCheck = Array.from(
-//             new Set([force === undefined && !hasState, force === true])
-//         ).includes(true);
-//         const key = addCheck ? 'add' : 'delete';
-
-//         states[key](name);
-//     }
-
-//     applyDefaultStates() {
-//         this.#statesMap
-//             .entries()
-//             .reduce((acc, entry) => {
-//                 const name = entry[0];
-//                 const options = entry[1];
-//                 if (options.isDefault === true) {
-//                     acc.push(name);
-//                 }
-//                 return acc;
-//             }, [])
-//             .forEach((state) => {
-//                 this.manageState(state, true);
-//             });
-//     }
-
-//     upgradeProperty(prop) {
-//         if (Object.hasOwn(this, prop)) {
-//             let value = this[prop];
-//             delete this[prop];
-//             this[prop] = value;
-//         }
-//     }
-
-//     upgradeProperties() {
-//         Array.from(this.#updatablePropertiesSet).forEach((prop) =>
-//             this.upgradeProperty(prop)
-//         );
-//     }
-
-//     connectedCallback() {
-//         this.upgradeProperties();
-//         this.applyDefaultStates();
-//     }
-// }
-
-/**
- * @extends HTMLElement
- * @method { function } adoptHTML
- */
 const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
     // Should these be on the base?
     // Will adding to the map effect all elements?
@@ -238,20 +66,22 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
         super();
         this[INTERNALS] = this.attachInternals();
 
+        this.configureInternals();
         this.configureShadowRoot(config.shadowRootOptions);
         this.adoptHTML(config.html);
-        this.adoptStyleSheets(config.stylesheets);
-
-        // set up default states
-        // set up default aria
+        this.adoptStyleSheets(config.styles);
     }
 
     /**
      *
-     * @param {HTMLTemplateElement} template
+     * @param {HTMLTemplateElement | string } template
      */
     adoptHTML(template) {
         if (template !== undefined) {
+            if (typeof template === 'string') {
+                template = document.createElement('template');
+                template.content.append(string);
+            }
             this[INTERNALS].shadowRoot.append(template.content.cloneNode(true));
         }
     }
@@ -263,6 +93,37 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
     adoptStyleSheets(stylesheets) {
         if (stylesheets) {
             this[INTERNALS].shadowRoot.adoptedStyleSheets = [...stylesheets];
+        }
+    }
+
+    /**
+     * Creates the initial aria role, aria and custom states by 
+     * by applying the defaults saved in the internals map.
+     */
+    configureInternals() {
+        console.log('HERE')
+        console.log('INTERNALS MAP', this[INTERNALS_MAP])
+        console.dir(this)
+        if (this[INTERNALS_MAP] !== undefined) {
+            Object.entries(this[INTERNALS_MAP]).forEach((entry) => {
+                const internalsKey = /** @type {string} */ entry[0];
+                const interalsConfig /** @type {T} */ = entry[1];
+
+                if (internalsKey.includes('aria') || internalsKey === 'role') {
+                    this.manageAria(internalsKey);
+                    return;
+                }
+
+                if (internalsKey === 'states') {
+                    Object.entries(interalsConfig).forEach((state) => {
+                        this.manageState(
+                            state[NAME],
+                            state[DEFAULT_ENABLED] === true
+                        );
+                    });
+                    return;
+                }
+            });
         }
     }
 
@@ -282,8 +143,21 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
         this.attachShadow(options);
     }
 
+    /**
+     * Applies a value to a configured aria-* property
+     * If no value is passed, the default is used.
+     * @param {string} name 
+     * @param {string} [value] 
+     */
     manageAria(name, value) {
-        this[INTERNALS][name] = value;
+        const internalsMap = this[INTERNALS_MAP];
+
+        if (internalsMap.has(name)) {
+            value = value === undefined
+                ? internalsMap.get(name)[DEFAULT_VALUE]
+                : value
+            this[INTERNALS][name] = value;
+        }
     }
 
     /**
@@ -291,7 +165,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
      * @param {string} name
      * @param {boolean} [force]
      */
-    manageState(name, force) {
+    manageState(name, force = undefined) {
         // this needs to also work for states that have values.
         const states = this[INTERNALS].states;
         const hasState = states.has(name);
@@ -301,30 +175,32 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
         const key = addCheck ? 'add' : 'delete';
 
         states[key](name);
+
+        // should also apply the aria if asociated.
     }
 
-    applyDefaultStates() {
-        this[STATES_MAP].entries()
-            .reduce((acc, entry) => {
-                const name = entry[0];
-                const options = entry[1];
-                if (options.isDefault === true) {
-                    acc.push(name);
-                }
-                return acc;
-            }, [])
-            .forEach((state) => {
-                this.manageState(state, true);
-            });
-    }
+    // applyDefaultStates() {
+    //     this[STATES_MAP].entries()
+    //         .reduce((acc, entry) => {
+    //             const name = entry[0];
+    //             const options = entry[1];
+    //             if (options.isDefault === true) {
+    //                 acc.push(name);
+    //             }
+    //             return acc;
+    //         }, [])
+    //         .forEach((state) => {
+    //             this.manageState(state, true);
+    //         });
+    // }
 
-    applyDefaultAria() {
-        this[ARIA_MAP].entries().forEach((entry) => {
-            const name = entry[0];
-            const value = entry[1];
-            this.manageAria(name, value);
-        });
-    }
+    // applyDefaultAria() {
+    //     this[ARIA_MAP].entries().forEach((entry) => {
+    //         const name = entry[0];
+    //         const value = entry[1];
+    //         this.manageAria(name, value);
+    //     });
+    // }
 
     upgradeProperty(prop) {
         if (Object.hasOwn(this, prop)) {
@@ -336,10 +212,10 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
 
     upgradeProperties() {
         if (this[UPGRADABLE_PROPERTIES_SET] !== undefined) {
-            console.log(
-                'UPGRADABLE PROPERTIES',
-                this[UPGRADABLE_PROPERTIES_SET]
-            );
+            // console.log(
+            //     'UPGRADABLE PROPERTIES',
+            //     this[UPGRADABLE_PROPERTIES_SET]
+            // );
             Array.from(this[UPGRADABLE_PROPERTIES_SET]).forEach((prop) =>
                 this.upgradeProperty(prop)
             );
@@ -348,30 +224,25 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
 
     connectedCallback() {
         this.upgradeProperties();
-        // this.applyDefaultStates();
     }
 };
 
 const config = {
-    // shadowRootOptions: {},
-    // html: '',
-    // styles: [],
-    // states: []
     internals: {
         [ARIA_ORIENTATION]: {
-            value: HORIZONTAL,
-            allowableValues: [ HORIZONTAL, VERTICAL, UNDEFINED]
-        }
+            [DEFAULT_VALUE]: HORIZONTAL,
+            [ALLOWABLE_VALUES]: [HORIZONTAL, VERTICAL, UNDEFINED],
+        },
     },
     attributes: [
         {
-            name: LAYOUT_ORIENTATION,
-            observable: true,
-            updatable: true,
-            allowableValues: [HORIZONTAL, VERTICAL],
-            defaultValue: HORIZONTAL,
-            associatedAria: ARIA_ORIENTATION,
-            descriptor: {
+            [NAME]: LAYOUT_ORIENTATION,
+            [OBSERVABLE]: true,
+            [UPDATABLE]: true,
+            [ALLOWABLE_VALUES]: [HORIZONTAL, VERTICAL],
+            [DEFAULT_VALUE]: HORIZONTAL,
+            [ASSOCIATED_ARIA_PROPERTY]: ARIA_ORIENTATION,
+            [DESCRIPTOR]: {
                 enumerable: true,
                 set(value) {
                     this.setAttribute(LAYOUT_ORIENTATION, value);

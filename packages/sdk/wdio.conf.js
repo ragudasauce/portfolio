@@ -57,6 +57,7 @@ export const config = {
         browserName: 'chrome' // or "firefox", "microsoftedge", "safari"
     }],
 
+
     //
     // ===================
     // Test Configurations
