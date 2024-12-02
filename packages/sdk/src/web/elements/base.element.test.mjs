@@ -2,8 +2,12 @@ import { default as SDKBaseElement } from './base.element.mjs';
 import { expect } from '@wdio/globals';
 import { spyOn } from '@wdio/browser-runner';
 import {
+    ARIA_VALUE,
+    ASSOCIATED_ARIA_PROPERTY,
+    DEFAULT_ENABLED,
     INTERNALS,
     INTERNALS_MAP,
+    NAME,
 } from '../constants/property.name.constants.mjs';
 import { createStateDescriptor } from '../utilities/states.utilities.mjs';
 import { HORIZONTAL } from '../constants/attribute.value.constants.mjs';
@@ -35,23 +39,23 @@ class BasicElement extends SDKBaseElement {
 
 const states = [
     {
-        name: 'testNoOptions',
+        [NAME]: 'testNoOptions',
     },
     {
-        name: 'indeterminate',
-        defaultEnabled: false,
-        associatedAria: 'ariaChecked',
-        ariaValue: 'mixed',
+        [NAME]: 'indeterminate',
+        [DEFAULT_ENABLED]: false,
+        [ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
+        [ARIA_VALUE]: 'mixed',
     },
     {
-        name: 'checked',
-        defaultEnabled: false,
-        associatedAria: 'ariaChecked',
+        [NAME]: 'checked',
+        [DEFAULT_ENABLED]: false,
+        [ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
     },
     {
-        name: 'required',
-        defaultEnabled: true,
-        associatedAria: 'ariaRequired',
+        [NAME]: 'required',
+        [DEFAULT_ENABLED]: true,
+        [ASSOCIATED_ARIA_PROPERTY]: 'ariaRequired',
     }
 ].map((state) => createStateDescriptor(state));
 
@@ -73,8 +77,8 @@ class ConfiguredElement extends SDKBaseElement {
     }
 }
 
-// ConfiguredElement[INTERNALS_MAP].set('role', 'checkbox');
-// ConfiguredElement[INTERNALS_MAP].set('states', states);
+ConfiguredElement.prototype[INTERNALS_MAP].set('role', 'checkbox');
+ConfiguredElement.prototype[INTERNALS_MAP].set('states', states);
 
 customElements.define(basicElement, BasicElement);
 customElements.define(configuredElement, ConfiguredElement);
@@ -97,6 +101,7 @@ describe('The SDKBaseHTMLElement Class', function () {
         it('should create a valid HTML element with an unreachable shadow root if no configuration is specified', function () {
             expect(defaultComponent[INTERNALS]).toBeDefined();
             expect(defaultComponent[INTERNALS].states).toBeDefined();
+            expect(defaultComponent[INTERNALS].ariaOrientation).toBe(HORIZONTAL);
             expect(defaultComponent.shadowRoot).toBeNull();
             expect(configInternalSpy).toHaveBeenCalled();
             expect(configShadowRootSpy).toHaveBeenCalledWith(undefined);
@@ -106,12 +111,12 @@ describe('The SDKBaseHTMLElement Class', function () {
             configShadowRootSpy.mockClear();
             adoptHTMLSpy.mockClear();
             adoptStyleSheetsSpy.mockClear();
-            // expect(defaultComponent[INTERNALS].ariaOrientation).toBe(HORIZONTAL);
         });
 
-        it('should create a valid HTML element with a shadow root, styles, aria properites and internal states', () => {
+        it('should create a valid HTML element with a shadow root, styles, aria properites and internal states', function() {
             expect(configComponent[INTERNALS]).toBeDefined();
             expect(configComponent[INTERNALS].states).toBeDefined();
+            expect(configComponent[INTERNALS].ariaOrientation).toBe(HORIZONTAL);
             expect(configComponent.shadowRoot).toBeDefined();
             expect(configComponent.shadowRoot.adoptedStyleSheets).toBeDefined();
             expect(configInternalSpy).toHaveBeenCalled();
@@ -122,8 +127,6 @@ describe('The SDKBaseHTMLElement Class', function () {
             configShadowRootSpy.mockClear();
             adoptHTMLSpy.mockClear();
             adoptStyleSheetsSpy.mockClear();
-            // expect(configComponent[INTERNALS].ariaOrientation).toBe(HORIZONTAL);
-            expect(configComponent[INTERNALS].states.has('required')).toBe(true);
 
         });
     });

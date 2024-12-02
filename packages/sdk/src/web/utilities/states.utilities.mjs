@@ -1,7 +1,7 @@
 import { sanitizeObject } from './object.utilitites.mjs';
 /**
  * @typedef { object } StateDescriptor
- * @property { boolean } [isDefault]
+ * @property { boolean } [defaultEnabled=false]
  * @property { string } [associatedAriaState=null]
  * @property { string } [ariaValue]
  */
@@ -13,19 +13,18 @@ import {
     DEFAULT_ENABLED,
 } from '../constants/property.name.constants.mjs';
 
-const defaults = { [DEFAULT_ENABLED]: false };
-const requiredKeys = new Set().add(NAME).add(DEFAULT_ENABLED);
-const optionalKeys = new Set().add(ASSOCIATED_ARIA_PROPERTY).add(ARIA_VALUE);
-const message = {
-    descriptor: `Missing one or more required properties: ${Array.from(requiredKeys).join('|')}`,
-};
-
 /**
  *
  * @param {object} descriptor
  * @returns {StateDescriptor}
  */
 export function createStateDescriptor(descriptor = {}) {
+    const defaults = { [DEFAULT_ENABLED]: false };
+    const requiredKeys = new Set().add(NAME).add(DEFAULT_ENABLED);
+    const optionalKeys = new Set()
+        .add(ASSOCIATED_ARIA_PROPERTY)
+        .add(ARIA_VALUE);
+
     const merged = Object.assign(defaults, descriptor);
     const sanitizedDescriptor = sanitizeObject(
         Array.from(requiredKeys.union(optionalKeys)),
@@ -38,5 +37,7 @@ export function createStateDescriptor(descriptor = {}) {
         return sanitizedDescriptor;
     }
 
-    throw new Error(message.descriptor);
+    throw new Error(
+        `Missing one or more required properties: ${Array.from(requiredKeys).join('|')}`
+    );
 }

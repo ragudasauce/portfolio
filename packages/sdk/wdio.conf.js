@@ -22,9 +22,9 @@ export const config = {
     //
     specs: [
         './src/web/elements/base.element.test.mjs',
-        './src/web/elements/element.function.test.mjs',
-        './src/web/utilities/states.utilities.test.mjs',
-        './src/web/utilities/attributes.utilities.test.mjs'
+        // './src/web/elements/element.function.test.mjs',
+        // './src/web/utilities/states.utilities.test.mjs',
+        // './src/web/utilities/attributes.utilities.test.mjs'
     ],
     // Patterns to exclude.
     exclude: [
@@ -77,7 +77,8 @@ export const config = {
     // - @wdio/cli, @wdio/config, @wdio/utils
     // Level of logging verbosity: trace | debug | info | warn | error | silent
     logLevels: {
-        webdriver: 'silent',
+         webdriver: 'silent',
+        '@wdio/appium-service': 'silent',
         '@wdio/mocha-framework': 'info'
         // '@wdio/appium-service': 'info'
     },

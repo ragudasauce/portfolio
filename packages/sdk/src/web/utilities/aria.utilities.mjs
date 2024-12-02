@@ -4,13 +4,10 @@ import {
 } from '../constants/property.name.constants.mjs';
 import { sanitizeObject } from './object.utilitites.mjs';
 
-const requiredKeys = new Set().add(DEFAULT_VALUE);
-const optionalKeys = new Set().add(ALLOWABLE_VALUES);
-const message = {
-    descriptor: `Aria missing one or more required properties: ${Array.from(requiredKeys).join('|')}`,
-};
 
 export function createAriaDescriptor(descriptor = {}) {
+    const requiredKeys = new Set().add(DEFAULT_VALUE);
+    const optionalKeys = new Set().add(ALLOWABLE_VALUES);
     const sanitizedDescriptor = sanitizeObject(
         Array.from(requiredKeys.union(optionalKeys)),
         descriptor
@@ -22,5 +19,5 @@ export function createAriaDescriptor(descriptor = {}) {
         return sanitizedDescriptor;
     }
 
-    throw new Error(message.descriptor);
+    throw new Error(`Aria missing one or more required properties: ${Array.from(requiredKeys).join('|')}`);
 }

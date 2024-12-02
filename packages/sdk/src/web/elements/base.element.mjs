@@ -58,6 +58,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
     static [ARIA_MAP] = new Map();
     static [STATES_MAP] = new Map();
     static [UPGRADABLE_PROPERTIES_SET] = new Set();
+    static [INTERNALS_MAP] = new Map();
     /**
      *
      * @param {InstanceOptions} config
@@ -80,7 +81,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
         if (template !== undefined) {
             if (typeof template === 'string') {
                 template = document.createElement('template');
-                template.content.append(string);
+                template.content.append(template);
             }
             this[INTERNALS].shadowRoot.append(template.content.cloneNode(true));
         }
@@ -97,25 +98,23 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
     }
 
     /**
-     * Creates the initial aria role, aria and custom states by 
+     * Creates the initial aria role, aria and custom states by
      * by applying the defaults saved in the internals map.
      */
     configureInternals() {
-        console.log('HERE')
-        console.log('INTERNALS MAP', this[INTERNALS_MAP])
-        console.dir(this)
-        if (this[INTERNALS_MAP] !== undefined) {
-            Object.entries(this[INTERNALS_MAP]).forEach((entry) => {
-                const internalsKey = /** @type {string} */ entry[0];
-                const interalsConfig /** @type {T} */ = entry[1];
-
-                if (internalsKey.includes('aria') || internalsKey === 'role') {
-                    this.manageAria(internalsKey);
+        const internalsMap = this[INTERNALS_MAP];
+        if (internalsMap !== undefined) {
+            for (const [
+                /** @type {string} */ internalKey,
+                /** @type {T} */ internalValue,
+            ] of internalsMap.entries()) {
+                if (internalKey.includes('aria') || internalKey === 'role') {
+                    this.manageAria(internalKey);
                     return;
                 }
 
-                if (internalsKey === 'states') {
-                    Object.entries(interalsConfig).forEach((state) => {
+                if (internalKey === 'states') {
+                    Object.entries(internalValue).forEach((state) => {
                         this.manageState(
                             state[NAME],
                             state[DEFAULT_ENABLED] === true
@@ -123,7 +122,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
                     });
                     return;
                 }
-            });
+            }
         }
     }
 
@@ -146,16 +145,17 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
     /**
      * Applies a value to a configured aria-* property
      * If no value is passed, the default is used.
-     * @param {string} name 
-     * @param {string} [value] 
+     * @param {string} name
+     * @param {string} [value]
      */
     manageAria(name, value) {
         const internalsMap = this[INTERNALS_MAP];
 
         if (internalsMap.has(name)) {
-            value = value === undefined
-                ? internalsMap.get(name)[DEFAULT_VALUE]
-                : value
+            value =
+                value === undefined
+                    ? internalsMap.get(name)[DEFAULT_VALUE]
+                    : value;
             this[INTERNALS][name] = value;
         }
     }

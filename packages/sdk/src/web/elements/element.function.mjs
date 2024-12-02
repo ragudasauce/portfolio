@@ -9,7 +9,9 @@ import { createAriaDescriptor } from '../utilities/aria.utilities.mjs';
 import {
     DESCRIPTOR,
     INTERNALS_MAP,
+    OBSERVABLE,
     OBSERVED_ATTRIBUTES,
+    UPDATABLE,
     UPGRADABLE_PROPERTIES_SET,
 } from '../constants/property.name.constants.mjs';
 
@@ -74,22 +76,37 @@ function configureInternals(targetClass, internalsConfig = {}) {
         return;
     }
 
-    if (!Object.hasOwn(targetClass, INTERNALS_MAP)) {
-        Object.defineProperty(targetClass.prototype, INTERNALS_MAP, { value: new Map() });
-    }
+    // console.log('HAS INTERNALS MAP', targetClass[INTERNALS_MAP] !== undefined);
+    // console.log(
+    //     'HAS INTERNALS MAP, HAS OWN',
+    //     Object.hasOwn(targetClass, INTERNALS_MAP)
+    // );
+    // console.log(
+    //     'PROTOTYPE HAS INTERNALS MAP',
+    //     targetClass.prototype[INTERNALS_MAP] !== undefined
+    // );
+    // console.log(
+    //     'PROTOTYPE HAS INTERNALS MAP, HAS OWN',
+    //     Object.hasOwn(targetClass.prototype, INTERNALS_MAP)
+    // );
 
-    const internalsMap = targetClass.prototype[INTERNALS_MAP];
+    const internalsMap = targetClass[INTERNALS_MAP] !== undefined
+        ? structuredClone(targetClass[INTERNALS_MAP])
+        : new Map();
 
-    Object.entries(internalsConfig).forEach(entry => {
-        const propertyKey = formatAttributeName(entry[0])
+    Object.entries(internalsConfig).forEach((entry) => {
+        const propertyKey = formatAttributeName(entry[0]);
         const value = entry[1];
         if (propertyKey.includes('aria')) {
             internalsMap.set(propertyKey, createAriaDescriptor(value));
             return;
-        } 
-        
+        }
+
         if (propertyKey === 'states') {
-            internalsMap.set(propertyKey, value.map((state) => createStateDescriptor(state)))
+            internalsMap.set(
+                propertyKey,
+                value.map((state) => createStateDescriptor(state))
+            );
             return;
         }
 
@@ -97,7 +114,12 @@ function configureInternals(targetClass, internalsConfig = {}) {
             internalsMap.set(propertyKey, value);
             return;
         }
-    })
+    });
+
+    Object.defineProperty(targetClass.prototype, INTERNALS_MAP, {
+        value: internalsMap,
+        configurable: true,
+    });
 }
 
 function configureAttributes(targetClass, attributes = []) {
@@ -110,16 +132,41 @@ function configureAttributes(targetClass, attributes = []) {
     // I am worried that extending a class that has these set may miss
     // properties set in the super.
 
-    const observedAttributes = Object.hasOwn(targetClass, OBSERVED_ATTRIBUTES)
-        ? new Set(targetClass[OBSERVED_ATTRIBUTES])
-        : new Set();
+    // console.log(
+    //     'OBSERVED ATTRIBUTES',
+    //     Object.hasOwn(targetClass, OBSERVED_ATTRIBUTES),
+    //     targetClass[OBSERVED_ATTRIBUTES] !== undefined
+    // );
+    // console.log(
+    //     'OBSERVED ATTRIBUTES PROTOTYPE',
+    //     Object.hasOwn(targetClass.prototype, OBSERVED_ATTRIBUTES),
+    //     targetClass.prototype[OBSERVED_ATTRIBUTES] !== undefined
+    // );
 
-    const upgradableProperties = Object.hasOwn(
-        targetClass,
-        UPGRADABLE_PROPERTIES_SET
-    )
-        ? targetClass[UPGRADABLE_PROPERTIES_SET]
-        : new Set();
+    // console.log(
+    //     'UPGRADABLE ATTRIBUTES',
+    //     Object.hasOwn(targetClass, UPGRADABLE_PROPERTIES_SET),
+    //     targetClass[UPGRADABLE_PROPERTIES_SET] !== undefined
+    // );
+    // console.log(
+    //     'UPGRADABLE ATTRIBUTES PROTOTYPE',
+    //     Object.hasOwn(targetClass.prototype, UPGRADABLE_PROPERTIES_SET),
+    //     targetClass.prototype[UPGRADABLE_PROPERTIES_SET] !== undefined
+    // );
+
+    const observedAttributes =
+        targetClass[OBSERVED_ATTRIBUTES] !== undefined
+            ? new Set(targetClass[OBSERVED_ATTRIBUTES])
+            : new Set();
+
+    // const upgradableProperties = Object.hasOwn(
+    //     targetClass,
+    //     UPGRADABLE_PROPERTIES_SET
+    // )
+    const upgradablePropertiesSet =
+        targetClass[UPGRADABLE_PROPERTIES_SET] !== undefined
+            ? structuredClone(targetClass[UPGRADABLE_PROPERTIES_SET])
+            : new Set();
 
     // NOTE: not sure why Object.hasOwn() is only working with 'static' class fields
     // e.g.: class {
@@ -133,13 +180,14 @@ function configureAttributes(targetClass, attributes = []) {
 
     const properties = attributes.reduce((acc, attribute) => {
         const attributeIDLName = createIDLName(attribute.name);
-        const isObservable = attribute.observable === true;
-        const isUpgradable = attribute.upgradable === true;
+        const isObservable = attribute[OBSERVABLE] === true;
+        const isUpgradable = attribute[UPDATABLE] === true;
         const descriptor = createAttributeDescription(attribute[DESCRIPTOR]);
 
         if (isObservable) {
             observedAttributes.add(convertCamelToKebabCase(attributeIDLName));
             acc[OBSERVED_ATTRIBUTES] = {
+                configurable: true,
                 get() {
                     return [...Array.from(observedAttributes)];
                 },
@@ -147,9 +195,10 @@ function configureAttributes(targetClass, attributes = []) {
         }
 
         if (isUpgradable) {
-            upgradableProperties.add(attributeIDLName);
+            upgradablePropertiesSet.add(attributeIDLName);
             acc[UPGRADABLE_PROPERTIES_SET] = {
-                value: new Set().union(upgradableProperties),
+                value: new Set().union(upgradablePropertiesSet),
+                configurable: true,
             };
         }
 
@@ -166,7 +215,7 @@ function configureAttributes(targetClass, attributes = []) {
         return acc;
     }, {});
 
-    Object.defineProperties(targetClass, properties);
+    Object.defineProperties(targetClass.prototype, properties);
 }
 
 /**
