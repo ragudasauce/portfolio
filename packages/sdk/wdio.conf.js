@@ -22,9 +22,10 @@ export const config = {
     //
     specs: [
         './src/web/elements/base.element.test.mjs',
-        // './src/web/elements/element.function.test.mjs',
-        // './src/web/utilities/states.utilities.test.mjs',
-        // './src/web/utilities/attributes.utilities.test.mjs'
+        './src/web/elements/element.function.test.mjs',
+        './src/web/utilities/attributes.utilities.test.mjs',
+        './src/web/utilities/aria.utilities.test.mjs',
+        './src/web/utilities/states.utilities.test.mjs',
     ],
     // Patterns to exclude.
     exclude: [
