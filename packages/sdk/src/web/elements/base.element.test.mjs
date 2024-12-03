@@ -111,8 +111,6 @@ class AlternateElement extends SDKBaseElement {
     }
 }
 
-console.dir(ConfiguredElement);
-
 customElements.define(basicElement, BasicElement);
 customElements.define(configuredElement, ConfiguredElement);
 customElements.define(alternativeElement, AlternateElement);

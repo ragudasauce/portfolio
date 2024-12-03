@@ -102,15 +102,15 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
      */
     configureInternals() {
         for (const [
-            /** @type {string} */ internalKey,
-            /** @type {T} */ internalValue,
+            /** @type {string} */ internalsKey,
+            /** @type {T} */ internalsValue,
         ] of this[INTERNALS_MAP]) {
-            if (internalKey.includes('aria') || internalKey === 'role') {
-                this.manageAria(internalKey);
+            if (internalsKey.includes('aria') || internalsKey === 'role') {
+                this.manageAria(internalsKey);
             }
 
-            if (internalKey === 'states') {
-                for (const [stateKey, stateDescriptor] of internalValue) {
+            if (internalsKey === 'states') {
+                for (const [stateKey, stateDescriptor] of internalsValue) {
                     const defaultEnabled = stateDescriptor[DEFAULT_ENABLED];
                     this.manageState(stateKey, defaultEnabled);
                 }
@@ -176,6 +176,7 @@ const primitiveClass = class SDKBaseHTMLElement extends HTMLElement {
         states[key](name);
 
         const associatedAria = state[ASSOCIATED_ARIA_PROPERTY];
+        
         if (associatedAria !== undefined) {
             const ariaValue = state[ARIA_VALUE] || addCheck.toString();
             this.manageAria(associatedAria, ariaValue)
