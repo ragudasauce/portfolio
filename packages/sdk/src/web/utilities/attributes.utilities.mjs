@@ -54,7 +54,6 @@ export function formatAttributeName(nameString) {
 
 export function createIDLName(nameString) {
     return nameString.replace(notAllowedPattern, (match) => {
-        console.log(match)
         return match.replace(/[-_\s]/, '').toUpperCase();
     })
 }

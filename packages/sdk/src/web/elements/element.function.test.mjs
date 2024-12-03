@@ -6,6 +6,7 @@ import {
 } from '../constants/attribute.value.constants.mjs';
 import * as attr from '../constants/attribute.name.constants.mjs';
 import * as prop from '../constants/property.name.constants.mjs';
+import { createStateDescriptor } from '../utilities/states.utilities.mjs';
 
 describe('the createSDKElement function', function () {
     it('should return a basic class if no arguments are passed', function () {
@@ -22,11 +23,33 @@ describe('the createSDKElement function', function () {
     });
 
     describe('should return a modified class', function () {
-        let internals, attributes;
+        let internals, attributes, states, statesMap;
         let ExtendedElement, PrimitiveElement, BasicElement;
         let extendedTag, primitiveTag, basicTag;
 
         before(function () {
+            states = [
+                {
+                    [prop.NAME]: 'testNoOptions',
+                },
+                {
+                    [prop.NAME]: 'indeterminate',
+                    [prop.DEFAULT_ENABLED]: false,
+                    [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
+                    [prop.ARIA_VALUE]: 'mixed',
+                },
+                {
+                    [prop.NAME]: 'checked',
+                    [prop.DEFAULT_ENABLED]: false,
+                    [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
+                },
+            ];
+
+            statesMap = states.reduce((acc, state) => {
+                acc.set(state[prop.NAME], createStateDescriptor(state));
+                return acc;
+            }, new Map());
+
             internals = {
                 notAllowed: 'a property that is not aria-*, role, or states',
                 role: 'checkbox',
@@ -38,22 +61,7 @@ describe('the createSDKElement function', function () {
                     [prop.DEFAULT_VALUE]: 'false',
                     [prop.ALLOWABLE_VALUES]: ['true', 'false'],
                 },
-                states: [
-                    {
-                        [prop.NAME]: 'testNoOptions',
-                    },
-                    {
-                        [prop.NAME]: 'indeterminate',
-                        [prop.DEFAULT_ENABLED]: false,
-                        [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
-                        [prop.ARIA_VALUE]: 'mixed',
-                    },
-                    {
-                        [prop.NAME]: 'checked',
-                        [prop.DEFAULT_ENABLED]: false,
-                        [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
-                    },
-                ],
+                states,
             };
             attributes = [
                 {
@@ -135,10 +143,14 @@ describe('the createSDKElement function', function () {
                     static [prop.UPGRADABLE_PROPERTIES_SET] = new Set().add(
                         'sometest'
                     );
-                    static [prop.INTERNALS_MAP] = new Map().set(
-                        'testing',
-                        true
-                    );
+                    static [prop.INTERNALS_MAP] = new Map()
+                        .set('testing', true)
+                        .set(
+                            'states',
+                            new Map().set('existing', {
+                                [prop.DEFAULT_ENABLED]: false,
+                            })
+                        );
 
                     constructor() {
                         super();
@@ -173,6 +185,7 @@ describe('the createSDKElement function', function () {
                 basicTag,
                 createSDKElement(BasicElement, { internals, attributes })
             );
+
             customElements.define(
                 primitiveTag,
                 createSDKElement(PrimitiveElement, { internals, attributes })
@@ -193,23 +206,7 @@ describe('the createSDKElement function', function () {
                         [prop.DEFAULT_VALUE]: 'false',
                         [prop.ALLOWABLE_VALUES]: ['true', 'false'],
                     })
-                    .set('states', [
-                        {
-                            [prop.NAME]: 'testNoOptions',
-                            [prop.DEFAULT_ENABLED]: false,
-                        },
-                        {
-                            [prop.NAME]: 'indeterminate',
-                            [prop.DEFAULT_ENABLED]: false,
-                            [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
-                            [prop.ARIA_VALUE]: 'mixed',
-                        },
-                        {
-                            [prop.NAME]: 'checked',
-                            [prop.DEFAULT_ENABLED]: false,
-                            [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
-                        },
-                    ]);
+                    .set('states', statesMap);
 
                 const upgradableSet = new Set().add('test');
 
@@ -235,23 +232,7 @@ describe('the createSDKElement function', function () {
                         [prop.DEFAULT_VALUE]: 'false',
                         [prop.ALLOWABLE_VALUES]: ['true', 'false'],
                     })
-                    .set('states', [
-                        {
-                            [prop.NAME]: 'testNoOptions',
-                            [prop.DEFAULT_ENABLED]: false,
-                        },
-                        {
-                            [prop.NAME]: 'indeterminate',
-                            [prop.DEFAULT_ENABLED]: false,
-                            [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
-                            [prop.ARIA_VALUE]: 'mixed',
-                        },
-                        {
-                            [prop.NAME]: 'checked',
-                            [prop.DEFAULT_ENABLED]: false,
-                            [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
-                        },
-                    ]);
+                    .set('states', statesMap);
 
                 const upgradableSet = new Set().add('testing').add('test');
 
@@ -265,6 +246,10 @@ describe('the createSDKElement function', function () {
             });
 
             it('on an extended class with existing properties', function () {
+                const extendedStatesMap = structuredClone(statesMap);
+                extendedStatesMap
+                    .set('existing', { [prop.DEFAULT_ENABLED]: false });
+
                 const targetElement = document.createElement(extendedTag);
                 const expectedMap = new Map()
                     .set('testing', true)
@@ -277,23 +262,7 @@ describe('the createSDKElement function', function () {
                         [prop.DEFAULT_VALUE]: 'false',
                         [prop.ALLOWABLE_VALUES]: ['true', 'false'],
                     })
-                    .set('states', [
-                        {
-                            [prop.NAME]: 'testNoOptions',
-                            [prop.DEFAULT_ENABLED]: false,
-                        },
-                        {
-                            [prop.NAME]: 'indeterminate',
-                            [prop.DEFAULT_ENABLED]: false,
-                            [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
-                            [prop.ARIA_VALUE]: 'mixed',
-                        },
-                        {
-                            [prop.NAME]: 'checked',
-                            [prop.DEFAULT_ENABLED]: false,
-                            [prop.ASSOCIATED_ARIA_PROPERTY]: 'ariaChecked',
-                        },
-                    ]);
+                    .set('states', extendedStatesMap);
 
                 const upgradableSet = new Set().add('sometest').add('test');
 
@@ -306,11 +275,12 @@ describe('the createSDKElement function', function () {
                 expect(targetElement[prop.LAYOUT_ORIENTATION]).toBe(HORIZONTAL);
             });
 
-            it('automatically for the attributesChangedCallback lifecyle', function() {
+            it('automatically for the attributesChangedCallback lifecyle', function () {
                 const targetElement = document.createElement(basicTag);
-                expect(targetElement[prop.OBSERVED_ATTRIBUTES]).toEqual([attr.LAYOUT_ORIENTATION]);
-
-            })
+                expect(targetElement[prop.OBSERVED_ATTRIBUTES]).toEqual([
+                    attr.LAYOUT_ORIENTATION,
+                ]);
+            });
         });
     });
 });

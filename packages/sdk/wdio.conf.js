@@ -180,7 +180,7 @@ export const config = {
                 reportTitle: 'Test Report Title',
                 linkScreenshots: true,
                 //to show the report in a browser when done
-                showInBrowser: true,
+                showInBrowser: false,
                 collapseTests: false,
                 //to turn on screenshots after every test
                 useOnAfterCommandForScreenshot: false,
@@ -216,7 +216,7 @@ export const config = {
             browserName: process.env.TEST_BROWSER
                 ? process.env.TEST_BROWSER
                 : 'unspecified',
-            showInBrowser: true,
+            showInBrowser: false,
         });
 
         reportAggregator.clean();

@@ -10,6 +10,7 @@ import {
     DESCRIPTOR,
     INTERNALS_MAP,
     OBSERVABLE,
+    NAME,
     OBSERVED_ATTRIBUTES,
     UPDATABLE,
     UPGRADABLE_PROPERTIES_SET,
@@ -76,20 +77,6 @@ function configureInternals(targetClass, internalsConfig = {}) {
         return;
     }
 
-    // console.log('HAS INTERNALS MAP', targetClass[INTERNALS_MAP] !== undefined);
-    // console.log(
-    //     'HAS INTERNALS MAP, HAS OWN',
-    //     Object.hasOwn(targetClass, INTERNALS_MAP)
-    // );
-    // console.log(
-    //     'PROTOTYPE HAS INTERNALS MAP',
-    //     targetClass.prototype[INTERNALS_MAP] !== undefined
-    // );
-    // console.log(
-    //     'PROTOTYPE HAS INTERNALS MAP, HAS OWN',
-    //     Object.hasOwn(targetClass.prototype, INTERNALS_MAP)
-    // );
-
     const internalsMap = targetClass[INTERNALS_MAP] !== undefined
         ? structuredClone(targetClass[INTERNALS_MAP])
         : new Map();
@@ -103,10 +90,16 @@ function configureInternals(targetClass, internalsConfig = {}) {
         }
 
         if (propertyKey === 'states') {
-            internalsMap.set(
-                propertyKey,
-                value.map((state) => createStateDescriptor(state))
-            );
+            if (!internalsMap.has(propertyKey)) {
+                internalsMap.set(propertyKey, new Map())
+            };
+
+            const statesMap = internalsMap.get(propertyKey);
+
+            value.forEach(state => {
+                statesMap.set(state[NAME], createStateDescriptor(state))
+            })
+
             return;
         }
 
@@ -126,57 +119,16 @@ function configureAttributes(targetClass, attributes = []) {
     if (attributes.length === 0) {
         return;
     }
-    // NOTE: we may want to check the targetClass for observableAttributes
-    // an upgradableProperties before we start re-assigning them below.
-
-    // I am worried that extending a class that has these set may miss
-    // properties set in the super.
-
-    // console.log(
-    //     'OBSERVED ATTRIBUTES',
-    //     Object.hasOwn(targetClass, OBSERVED_ATTRIBUTES),
-    //     targetClass[OBSERVED_ATTRIBUTES] !== undefined
-    // );
-    // console.log(
-    //     'OBSERVED ATTRIBUTES PROTOTYPE',
-    //     Object.hasOwn(targetClass.prototype, OBSERVED_ATTRIBUTES),
-    //     targetClass.prototype[OBSERVED_ATTRIBUTES] !== undefined
-    // );
-
-    // console.log(
-    //     'UPGRADABLE ATTRIBUTES',
-    //     Object.hasOwn(targetClass, UPGRADABLE_PROPERTIES_SET),
-    //     targetClass[UPGRADABLE_PROPERTIES_SET] !== undefined
-    // );
-    // console.log(
-    //     'UPGRADABLE ATTRIBUTES PROTOTYPE',
-    //     Object.hasOwn(targetClass.prototype, UPGRADABLE_PROPERTIES_SET),
-    //     targetClass.prototype[UPGRADABLE_PROPERTIES_SET] !== undefined
-    // );
 
     const observedAttributes =
         targetClass[OBSERVED_ATTRIBUTES] !== undefined
             ? new Set(targetClass[OBSERVED_ATTRIBUTES])
             : new Set();
 
-    // const upgradableProperties = Object.hasOwn(
-    //     targetClass,
-    //     UPGRADABLE_PROPERTIES_SET
-    // )
     const upgradablePropertiesSet =
         targetClass[UPGRADABLE_PROPERTIES_SET] !== undefined
             ? structuredClone(targetClass[UPGRADABLE_PROPERTIES_SET])
             : new Set();
-
-    // NOTE: not sure why Object.hasOwn() is only working with 'static' class fields
-    // e.g.: class {
-    //     fieldName <- won't show up
-    //     static fieldName <- will show up.
-    // }
-    // This may be because we're looking at just the class and NOT instantiating it.
-
-    // 'static' is actually a good choice since the idea would be that those fields wouldn't change
-    // across instances.
 
     const properties = attributes.reduce((acc, attribute) => {
         const attributeIDLName = createIDLName(attribute.name);

@@ -2,14 +2,13 @@ import { sanitizeObject } from './object.utilitites.mjs';
 /**
  * @typedef { object } StateDescriptor
  * @property { boolean } [defaultEnabled=false]
- * @property { string } [associatedAriaState=null]
+ * @property { string } [associatedAriaState]
  * @property { string } [ariaValue]
  */
 
 import {
     ASSOCIATED_ARIA_PROPERTY,
     ARIA_VALUE,
-    NAME,
     DEFAULT_ENABLED,
 } from '../constants/property.name.constants.mjs';
 
@@ -20,7 +19,7 @@ import {
  */
 export function createStateDescriptor(descriptor = {}) {
     const defaults = { [DEFAULT_ENABLED]: false };
-    const requiredKeys = new Set().add(NAME).add(DEFAULT_ENABLED);
+    const requiredKeys = new Set().add(DEFAULT_ENABLED);
     const optionalKeys = new Set()
         .add(ASSOCIATED_ARIA_PROPERTY)
         .add(ARIA_VALUE);
@@ -30,6 +29,14 @@ export function createStateDescriptor(descriptor = {}) {
         Array.from(requiredKeys.union(optionalKeys)),
         merged
     );
+    return sanitizedDescriptor;
+    
+    /*
+    
+    // NOTE: this code is unreachable since the only required key is added through the merged object.
+    // Originally a 'name' field required.
+    
+    
     const sanitizedKeys = new Set(Object.keys(sanitizedDescriptor));
     const requiredSet = sanitizedKeys.intersection(requiredKeys);
 
@@ -40,4 +47,6 @@ export function createStateDescriptor(descriptor = {}) {
     throw new Error(
         `Missing one or more required properties: ${Array.from(requiredKeys).join('|')}`
     );
+     
+    */
 }

@@ -1,4 +1,5 @@
 import {
+    ASSOCIATED_ARIA_PROPERTY,
     DEFAULT_ENABLED,
     NAME,
 } from '../constants/property.name.constants.mjs';
@@ -7,43 +8,39 @@ import { expect } from '@wdio/globals';
 
 describe('the state utilities', function () {
     describe('createDescriptor', function () {
-        it('should throw an error if required keys are missing', function () {
-            expect(function () {
-                createStateDescriptor();
-            }).toThrow();
-            expect(function () {
-                createStateDescriptor({ [DEFAULT_ENABLED]: true });
-            }).toThrow();
-            expect(function () {
-                createStateDescriptor({ [NAME]: 'rick' });
-            }).not.toThrow();
+        // This test is for code that is no longer reachable.
+        // it('should throw an error if required keys are missing', function () {
+        //     expect(function () {
+        //         createStateDescriptor();
+        //     }).not.toThrow();
+        //     expect(function () {
+        //         createStateDescriptor({ [NAME]: 'rick' });
+        //     }).not.toThrow();
+        //     expect(function () {
+        //         createStateDescriptor({ [DEFAULT_ENABLED]: true });
+        //     }).not.toThrow();
+        // });
+
+        it('should return an object with a default enabled property', function () {
+            const expected = {
+                [DEFAULT_ENABLED]: false,
+            };
+
+            const result = createStateDescriptor();
+
+            expect(result).toEqual(expected);
         });
-
-        // This passes when it is run as .only but not when part of the suite. Not sure why.
-        // it('should return an object with a name and a default enabled property', function() {
-        //     descriptor = {
-        //         [NAME]: 'rickSanchez'
-        //     }
-
-        //     expected = {
-        //         ...descriptor,
-        //         [DEFAULT_ENABLED]: false
-        //     }
-
-        //     result = createStateDescriptor(descriptor);
-
-        //     expect(result).toEqual(expected);
-        // })
 
         it('should only return a descriptor with allowable keys', function () {
             const descriptor = {
                 [NAME]: 'rick',
                 [DEFAULT_ENABLED]: true,
                 family: 'morty, summer, beth',
+                [ASSOCIATED_ARIA_PROPERTY]: 'ariaRequired',
             };
             const expected = {
-                [NAME]: 'rick',
                 [DEFAULT_ENABLED]: true,
+                [ASSOCIATED_ARIA_PROPERTY]: 'ariaRequired',
             };
 
             const result = createStateDescriptor(descriptor);
