@@ -1,10 +1,37 @@
+import { ReportAggregator } from 'wdio-html-nice-reporter';
+import commands from '@rpii/wdio-commands';
+import { String } from 'typescript-string-operations';
+import 'expect-webdriverio';
+import 'dotenv/config';
+
+// const localEnv =  require('dotenv');
+// localEnv.config();
+// const video = require('wdio-video-reporter');
+
+let reportAggregator;
+
 export const config = {
     //
     // ====================
     // Runner Configuration
     // ====================
     // WebdriverIO supports running e2e tests as well as unit and component tests.
-    runner: 'browser',
+    // runner: 'browser',
+    runner: ['browser', {
+        coverage: {
+            enabled: true,
+            include: [
+                'src/web/elements/base.element.mjs',
+                'src/web/elements/element.function.mjs',
+                'src/web/utilities/*.utilities.mjs',
+            ],
+            clean: true,
+            lines: 100,
+            functions: 100,
+            branches: 100,
+            statements: 100
+        }
+    }],
     //
     // ==================
     // Specify Test Files
@@ -47,17 +74,27 @@ export const config = {
     // and 30 processes will get spawned. The property handles how many capabilities
     // from the same test should run tests.
     //
-    maxInstances: 10,
-    //
-    // If you have trouble getting all important capabilities together, check out the
-    // Sauce Labs platform configurator - a great tool to configure your capabilities:
-    // https://saucelabs.com/platform/platform-configurator
-    //
-    capabilities: [{
-        // capabilities for local browser web tests
-        browserName: 'chrome' // or "firefox", "microsoftedge", "safari"
-    }],
+    // maxInstances: 10,
+    // //
+    // // If you have trouble getting all important capabilities together, check out the
+    // // Sauce Labs platform configurator - a great tool to configure your capabilities:
+    // // https://saucelabs.com/platform/platform-configurator
+    // //
+    capabilities: [
+        {
+            // capabilities for local browser web tests
+            browserName: 'chrome', // or "firefox", "microsoftedge", "safari",
+            maxInstances: 1
+        },
+    ],
 
+    // capabilities: [
+    //     {
+    //         // Set maxInstances to 1 if screen recordings are enabled:
+    //         maxInstances: 1,
+    //     },
+    // ],
+    maxInstances: 1,
 
     //
     // ===================
@@ -77,12 +114,14 @@ export const config = {
     // - @wdio/sumologic-reporter
     // - @wdio/cli, @wdio/config, @wdio/utils
     // Level of logging verbosity: trace | debug | info | warn | error | silent
-    logLevels: {
-         webdriver: 'silent',
-        '@wdio/appium-service': 'silent',
-        '@wdio/mocha-framework': 'info'
-        // '@wdio/appium-service': 'info'
-    },
+    // logLevels: {
+    //     webdriver: 'silent',
+    //     '@wdio/appium-service': 'silent',
+    //     '@wdio/mocha-framework': 'info',
+    //     // '@wdio/appium-service': 'info'
+    // },
+    logLevel: 'warn',
+    outputDir: './logs',
     //
     // If you only want to run your tests until a specific amount of tests have failed use
     // bail (default is 0 - don't bail, run all tests).
@@ -117,7 +156,7 @@ export const config = {
     // Make sure you have the wdio adapter package for the specific framework installed
     // before running any tests.
     framework: 'mocha',
-    
+
     //
     // The number of times to retry the entire specfile when it fails as a whole
     // specFileRetries: 1,
@@ -131,13 +170,29 @@ export const config = {
     // Test reporter for stdout.
     // The only one supported by default is 'dot'
     // see also: https://webdriver.io/docs/dot-reporter
-    reporters: ['spec'],
+    reporters: [
+        'spec',
+        [
+            'html-nice',
+            {
+                outputDir: './reports/html-reports/',
+                filename: 'report.html',
+                reportTitle: 'Test Report Title',
+                linkScreenshots: true,
+                //to show the report in a browser when done
+                showInBrowser: true,
+                collapseTests: false,
+                //to turn on screenshots after every test
+                useOnAfterCommandForScreenshot: false,
+            },
+        ],
+    ],
 
     // Options to be passed to Mocha.
     // See the full list at http://mochajs.org/
     mochaOpts: {
         ui: 'bdd',
-        timeout: 60000
+        timeout: 60000,
     },
 
     //
@@ -153,8 +208,19 @@ export const config = {
      * @param {object} config wdio configuration object
      * @param {Array.<Object>} capabilities list of capabilities details
      */
-    // onPrepare: function (config, capabilities) {
-    // },
+    onPrepare: function (config, capabilities) {
+        reportAggregator = new ReportAggregator({
+            outputDir: './reports/html-reports/',
+            filename: process.env.TEST_BROWSER + '-master-report.html',
+            reportTitle: 'Micro-Magic Web Test Report',
+            browserName: process.env.TEST_BROWSER
+                ? process.env.TEST_BROWSER
+                : 'unspecified',
+            showInBrowser: true,
+        });
+
+        reportAggregator.clean();
+    },
     /**
      * Gets executed before a worker process is spawned and can be used to initialize specific service
      * for that worker as well as modify runtime environments in an async fashion.
@@ -184,6 +250,9 @@ export const config = {
      * @param {string} cid worker id (e.g. 0-0)
      */
     // beforeSession: function (config, capabilities, specs, cid) {
+    //     // require('expect-webdriverio');
+    //     import 'expect-webdriverio';
+
     // },
     /**
      * Gets executed before test execution begins. At this point you can access to all global
@@ -192,8 +261,9 @@ export const config = {
      * @param {Array.<String>} specs        List of spec file paths that are to be run
      * @param {object}         browser      instance of created browser/device session
      */
-    // before: function (capabilities, specs) {
-    // },
+    before: function (capabilities, specs) {
+        commands.addCommands(driver);
+    },
     /**
      * Runs before a WebdriverIO command gets executed.
      * @param {string} commandName hook command name
@@ -234,9 +304,20 @@ export const config = {
      * @param {boolean} result.passed    true if test has passed, otherwise false
      * @param {object}  result.retries   information about spec related retries, e.g. `{ attempts: 0, limit: 0 }`
      */
-    // afterTest: function(test, context, { error, result, duration, passed, retries }) {
-    // },
-
+    afterTest: function (
+        test,
+        context,
+        { error, result, duration, passed, retries }
+    ) {
+        // if test passed, ignore, else take and save screenshot.
+        if (result.passed) {
+            return;
+        }
+        //@ts-ignore
+        driver.logScreenshot(
+            String.format('Test Ended in {0}', result.error.stack)
+        );
+    },
 
     /**
      * Hook that gets executed after the suite has ended
@@ -278,25 +359,28 @@ export const config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      * @param {<Object>} results object containing test results
      */
-    // onComplete: function(exitCode, config, capabilities, results) {
-    // },
+    onComplete: function (exitCode, config, capabilities, results) {
+        (async () => {
+            await reportAggregator.createReport();
+        })();
+    },
     /**
-    * Gets executed when a refresh happens.
-    * @param {string} oldSessionId session ID of the old session
-    * @param {string} newSessionId session ID of the new session
-    */
+     * Gets executed when a refresh happens.
+     * @param {string} oldSessionId session ID of the old session
+     * @param {string} newSessionId session ID of the new session
+     */
     // onReload: function(oldSessionId, newSessionId) {
     // }
     /**
-    * Hook that gets executed before a WebdriverIO assertion happens.
-    * @param {object} params information about the assertion to be executed
-    */
+     * Hook that gets executed before a WebdriverIO assertion happens.
+     * @param {object} params information about the assertion to be executed
+     */
     // beforeAssertion: function(params) {
     // }
     /**
-    * Hook that gets executed after a WebdriverIO assertion happened.
-    * @param {object} params information about the assertion that was executed, including its results
-    */
+     * Hook that gets executed after a WebdriverIO assertion happened.
+     * @param {object} params information about the assertion that was executed, including its results
+     */
     // afterAssertion: function(params) {
     // }
-}
+};
