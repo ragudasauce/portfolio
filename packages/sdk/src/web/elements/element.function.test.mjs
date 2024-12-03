@@ -28,6 +28,7 @@ describe('the createSDKElement function', function () {
 
         before(function () {
             internals = {
+                notAllowed: 'a property that is not aria-*, role, or states',
                 role: 'checkbox',
                 ariaRequired: {
                     [prop.DEFAULT_VALUE]: 'false',
@@ -304,6 +305,12 @@ describe('the createSDKElement function', function () {
                 expect(targetElement.state).toBe(1);
                 expect(targetElement[prop.LAYOUT_ORIENTATION]).toBe(HORIZONTAL);
             });
+
+            it('automatically for the attributesChangedCallback lifecyle', function() {
+                const targetElement = document.createElement(basicTag);
+                expect(targetElement[prop.OBSERVED_ATTRIBUTES]).toEqual([attr.LAYOUT_ORIENTATION]);
+
+            })
         });
     });
 });
