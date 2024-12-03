@@ -43,7 +43,6 @@ export function formatAttributeName(nameString) {
     const isKebab = isKebabCase(nameString);
     const isCamel = isCamelCase(nameString);
     const isDefault = isDefaultCase(nameString)
-    console.log('NAME', nameString, isKebab, isCamel, isDefault)
     const check = new Set([isKebab,isCamel, isDefault]);
 
     if (check.size === 1) {
@@ -54,7 +53,6 @@ export function formatAttributeName(nameString) {
 }
 
 export function createIDLName(nameString) {
-    console.log(nameString)
     return nameString.replace(notAllowedPattern, (match) => {
         console.log(match)
         return match.replace(/[-_\s]/, '').toUpperCase();
